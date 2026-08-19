@@ -1662,8 +1662,7 @@ async function listMedia(
 =========================================================
 */
 
-const LIBRARY_PATH =
-    "libraryofbabel";
+
 
 const LIBRARY_PAGE_PREFIX =
     "page";
