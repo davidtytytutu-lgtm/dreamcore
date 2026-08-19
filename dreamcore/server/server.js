@@ -77,6 +77,316 @@ const LIBRARY_OF_BABEL_DIRECTORY =
 const LIBRARY_OF_BABEL_MAX_FILE_SIZE =
     1024 * 1024;
 
+/*
+=========================================================
+ LIBRARY OF BABEL — DREAMCORE
+=========================================================
+*/
+
+async function githubListDirectory(
+    directory
+) {
+
+    try {
+
+        const encodedPath =
+            directory
+                .split("/")
+                .map(
+                    part =>
+                        encodeURIComponent(part)
+                )
+                .join("/");
+
+        return await githubRequest(
+            `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}?ref=${GITHUB_BRANCH}`
+        );
+
+    }
+
+    catch (error) {
+
+        if (
+            error.message.includes(
+                "GitHub API 404"
+            )
+        ) {
+
+            return [];
+
+        }
+
+        throw error;
+
+    }
+
+}
+
+
+async function listLibraryPages() {
+
+    const files =
+        await githubListDirectory(
+            "libraryofbabel"
+        );
+
+
+    const pages =
+        files
+
+            .filter(
+                file =>
+                    file.type === "file" &&
+                    /^page\d+\.txt$/i.test(
+                        file.name
+                    )
+            )
+
+            .map(
+                file => {
+
+                    const match =
+                        file.name.match(
+                            /^page(\d+)\.txt$/i
+                        );
+
+                    return {
+
+                        name:
+                            file.name,
+
+                        page:
+                            parseInt(
+                                match[1],
+                                10
+                            ),
+
+                        path:
+                            file.path,
+
+                        size:
+                            file.size,
+
+                        url:
+                            file.download_url,
+
+                        github:
+                            file.html_url
+
+                    };
+
+                }
+            )
+
+            .sort(
+                (a, b) =>
+                    a.page - b.page
+            );
+
+
+    return pages;
+
+}
+
+
+async function getLibraryPage(
+    pageNumber
+) {
+
+    const parsed =
+        parseInt(
+            pageNumber,
+            10
+        );
+
+
+    if (
+        !Number.isFinite(parsed) ||
+        parsed < 1
+    ) {
+
+        return null;
+
+    }
+
+
+    const filename =
+        `page${String(parsed).padStart(3, "0")}.txt`;
+
+
+    const filePath =
+        `libraryofbabel/${filename}`;
+
+
+    const file =
+        await githubReadFile(
+            filePath
+        );
+
+
+    if (!file) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        page:
+            parsed,
+
+        name:
+            filename,
+
+        path:
+            filePath,
+
+        size:
+            Buffer.byteLength(
+                file.content,
+                "utf8"
+            ),
+
+        content:
+            file.content
+
+    };
+
+}
+
+
+async function libraryOfBabel(
+    request,
+    response
+) {
+
+    try {
+
+        const pages =
+            await listLibraryPages();
+
+
+        sendJSON(
+            response,
+            200,
+            {
+
+                success:
+                    true,
+
+                directory:
+                    "libraryofbabel",
+
+                count:
+                    pages.length,
+
+                pages
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[LIBRARY OF BABEL]",
+            error
+        );
+
+
+        sendJSON(
+            response,
+            500,
+            {
+
+                error:
+                    "LIBRARY_OF_BABEL_FAILED",
+
+                message:
+                    error.message
+
+            }
+        );
+
+    }
+
+}
+
+
+async function libraryOfBabelPage(
+    request,
+    response,
+    pageNumber
+) {
+
+    try {
+
+        const page =
+            await getLibraryPage(
+                pageNumber
+            );
+
+
+        if (!page) {
+
+            sendJSON(
+                response,
+                404,
+                {
+
+                    error:
+                        "PAGE_NOT_FOUND"
+
+                }
+            );
+
+            return;
+
+        }
+
+
+        sendJSON(
+            response,
+            200,
+            {
+
+                success:
+                    true,
+
+                ...page
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[LIBRARY PAGE]",
+            error
+        );
+
+
+        sendJSON(
+            response,
+            500,
+            {
+
+                error:
+                    "LIBRARY_PAGE_FAILED",
+
+                message:
+                    error.message
+
+            }
+        );
+
+    }
+
+}
 
 /*
 =========================================================
