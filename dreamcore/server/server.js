@@ -2780,6 +2780,60 @@ async function libraryOfBabelPage(
 
 }
 
+/*
+=========================================================
+ LIBRARY OF BABEL
+=========================================================
+*/
+
+/*
+GET /api/libraryofbabel
+*/
+
+if (
+    url.pathname ===
+        "/api/libraryofbabel" &&
+    request.method ===
+        "GET"
+) {
+
+    await listLibraryPages(
+        request,
+        response
+    );
+
+    return;
+
+}
+
+
+/*
+GET /api/libraryofbabel/page/1
+*/
+
+if (
+    url.pathname.startsWith(
+        "/api/libraryofbabel/page/"
+    ) &&
+    request.method ===
+        "GET"
+) {
+
+    const pageNumber =
+        url.pathname
+            .split("/")
+            .pop();
+
+
+    await getLibraryPage(
+        request,
+        response,
+        pageNumber
+    );
+
+    return;
+
+}
 
 /*
 =========================================================
