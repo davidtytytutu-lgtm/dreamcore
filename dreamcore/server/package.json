@@ -1,0 +1,16 @@
+{
+  "name": "dreamcore-server",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "busboy": "^1.6.0",
+    "ws": "^8.18.3"
+  }
+}
