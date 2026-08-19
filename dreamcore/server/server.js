@@ -23,7 +23,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = "davidtytytutu-lgtm";
 const GITHUB_REPO = "dreamcore";
 const GITHUB_BRANCH = "main";
-
+const LIBRARY_PATH = "dreamcore/libraryofbabel";
 const CHAT_LOG_LIMIT = 15 * 1024 * 1024;
 const UPLOAD_LIMIT = 25 * 1024 * 1024;
 const MESSAGE_LIMIT = 500;
