@@ -7,46 +7,75 @@ const Busboy = require("busboy");
 const WebSocket = require("ws");
 const { createClient } = require("@supabase/supabase-js");
 
+
 /*
 =========================================================
  CONFIG
 =========================================================
 */
 
-const PORT = Number(process.env.PORT || 10000);
+const PORT =
+    Number(
+        process.env.PORT || 10000
+    );
+
 
 const SUPABASE_URL =
     process.env.SUPABASE_URL;
 
+
 const SUPABASE_SECRET_KEY =
     process.env.SUPABASE_SECRET_KEY;
+
 
 const GITHUB_TOKEN =
     process.env.GITHUB_TOKEN;
 
+
 const GITHUB_OWNER =
     "davidtytytutu-lgtm";
+
 
 const GITHUB_REPO =
     "dreamcore";
 
+
 const GITHUB_BRANCH =
     "main";
+
 
 const CHAT_LOG_LIMIT =
     15 * 1024 * 1024;
 
+
 const UPLOAD_LIMIT =
     25 * 1024 * 1024;
+
 
 const MESSAGE_LIMIT =
     500;
 
+
 const USERNAME_MIN =
     3;
 
+
 const USERNAME_MAX =
     24;
+
+
+/*
+=========================================================
+ LIBRARY OF BABEL CONFIG
+=========================================================
+*/
+
+const LIBRARY_OF_BABEL_DIRECTORY =
+    "libraryofbabel";
+
+
+const LIBRARY_OF_BABEL_MAX_FILE_SIZE =
+    1024 * 1024;
 
 
 /*
@@ -56,18 +85,35 @@ const USERNAME_MAX =
 */
 
 if (!SUPABASE_URL) {
-    console.error("[ERROR] SUPABASE_URL missing");
+
+    console.error(
+        "[ERROR] SUPABASE_URL missing"
+    );
+
     process.exit(1);
+
 }
+
 
 if (!SUPABASE_SECRET_KEY) {
-    console.error("[ERROR] SUPABASE_SECRET_KEY missing");
+
+    console.error(
+        "[ERROR] SUPABASE_SECRET_KEY missing"
+    );
+
     process.exit(1);
+
 }
 
+
 if (!GITHUB_TOKEN) {
-    console.error("[ERROR] GITHUB_TOKEN missing");
+
+    console.error(
+        "[ERROR] GITHUB_TOKEN missing"
+    );
+
     process.exit(1);
+
 }
 
 
@@ -82,10 +128,17 @@ const supabase =
         SUPABASE_URL,
         SUPABASE_SECRET_KEY,
         {
+
             auth: {
-                autoRefreshToken: false,
-                persistSession: false
+
+                autoRefreshToken:
+                    false,
+
+                persistSession:
+                    false
+
             }
+
         }
     );
 
@@ -491,6 +544,7 @@ async function createLog(
     const filename =
         `chat-log${String(number).padStart(3, "0")}.json`;
 
+
     const filePath =
         `chat-log/${filename}`;
 
@@ -503,7 +557,8 @@ async function createLog(
         created:
             new Date().toISOString(),
 
-        messages: []
+        messages:
+            []
 
     };
 
@@ -539,7 +594,9 @@ async function getCurrentLog() {
         files.length === 0
     ) {
 
-        return await createLog(1);
+        return await createLog(
+            1
+        );
 
     }
 
@@ -605,10 +662,14 @@ async function saveChatMessage(
 
     if (!file) {
 
-        await createLog(1);
+        await createLog(
+            1
+        );
+
 
         filePath =
             "chat-log/chat-log001.json";
+
 
         file =
             await githubReadFile(
@@ -734,7 +795,8 @@ function hashPassword(
         ) => {
 
             const salt =
-                crypto.randomBytes(16)
+                crypto
+                    .randomBytes(16)
                     .toString("hex");
 
 
@@ -743,9 +805,16 @@ function hashPassword(
                 salt,
                 64,
                 {
-                    N: 16384,
-                    r: 8,
-                    p: 1
+
+                    N:
+                        16384,
+
+                    r:
+                        8,
+
+                    p:
+                        1
+
                 },
                 (
                     error,
@@ -755,6 +824,7 @@ function hashPassword(
                     if (error) {
 
                         reject(error);
+
                         return;
 
                     }
@@ -785,7 +855,9 @@ function verifyPassword(
         ) => {
 
             const parts =
-                String(stored || "")
+                String(
+                    stored || ""
+                )
                     .split(":");
 
 
@@ -795,6 +867,7 @@ function verifyPassword(
             ) {
 
                 resolve(false);
+
                 return;
 
             }
@@ -802,6 +875,7 @@ function verifyPassword(
 
             const salt =
                 parts[1];
+
 
             const original =
                 Buffer.from(
@@ -815,9 +889,16 @@ function verifyPassword(
                 salt,
                 original.length,
                 {
-                    N: 16384,
-                    r: 8,
-                    p: 1
+
+                    N:
+                        16384,
+
+                    r:
+                        8,
+
+                    p:
+                        1
+
                 },
                 (
                     error,
@@ -827,6 +908,7 @@ function verifyPassword(
                     if (error) {
 
                         reject(error);
+
                         return;
 
                     }
@@ -871,7 +953,8 @@ function createSession(
 ) {
 
     const token =
-        crypto.randomBytes(32)
+        crypto
+            .randomBytes(32)
             .toString("hex");
 
 
@@ -942,7 +1025,9 @@ function getSessionFromToken(
 
 
     const session =
-        sessions.get(token);
+        sessions.get(
+            token
+        );
 
 
     if (!session) {
@@ -957,7 +1042,9 @@ function getSessionFromToken(
         Date.now()
     ) {
 
-        sessions.delete(token);
+        sessions.delete(
+            token
+        );
 
         return null;
 
@@ -981,7 +1068,9 @@ function requireSession(
 ) {
 
     const session =
-        getSession(request);
+        getSession(
+            request
+        );
 
 
     if (!session) {
@@ -990,10 +1079,13 @@ function requireSession(
             response,
             401,
             {
+
                 error:
                     "NOT_AUTHENTICATED"
+
             }
         );
+
 
         return null;
 
@@ -1019,8 +1111,14 @@ function cleanUsername(
         username || ""
     )
         .trim()
-        .replace(/\s+/g, "_")
-        .slice(0, USERNAME_MAX);
+        .replace(
+            /\s+/g,
+            "_"
+        )
+        .slice(
+            0,
+            USERNAME_MAX
+        );
 
 }
 
@@ -1069,7 +1167,9 @@ function validProfileURL(
     try {
 
         const url =
-            new URL(value);
+            new URL(
+                value
+            );
 
 
         return (
@@ -1121,7 +1221,9 @@ function sendJSON(
 
 
     response.end(
-        JSON.stringify(data)
+        JSON.stringify(
+            data
+        )
     );
 
 }
@@ -1137,7 +1239,8 @@ async function readJSON(
             reject
         ) => {
 
-            let body = "";
+            let body =
+                "";
 
 
             request.on(
@@ -1158,6 +1261,7 @@ async function readJSON(
                                 "Request too large"
                             )
                         );
+
 
                         request.destroy();
 
@@ -1220,7 +1324,9 @@ async function register(
     try {
 
         const data =
-            await readJSON(request);
+            await readJSON(
+                request
+            );
 
 
         const username =
@@ -1228,8 +1334,10 @@ async function register(
                 data.username
             );
 
+
         const password =
             data.password;
+
 
         const profilePicture =
             data.profile_picture ||
@@ -1237,17 +1345,22 @@ async function register(
 
 
         if (
-            !validUsername(username)
+            !validUsername(
+                username
+            )
         ) {
 
             sendJSON(
                 response,
                 400,
                 {
+
                     error:
                         "INVALID_USERNAME"
+
                 }
             );
+
 
             return;
 
@@ -1255,17 +1368,22 @@ async function register(
 
 
         if (
-            !validPassword(password)
+            !validPassword(
+                password
+            )
         ) {
 
             sendJSON(
                 response,
                 400,
                 {
+
                     error:
                         "INVALID_PASSWORD"
+
                 }
             );
+
 
             return;
 
@@ -1282,10 +1400,13 @@ async function register(
                 response,
                 400,
                 {
+
                     error:
                         "INVALID_PROFILE_PICTURE_URL"
+
                 }
             );
+
 
             return;
 
@@ -1316,10 +1437,13 @@ async function register(
                 response,
                 409,
                 {
+
                     error:
                         "USERNAME_ALREADY_USED"
+
                 }
             );
+
 
             return;
 
@@ -1395,8 +1519,10 @@ async function register(
             response,
             500,
             {
+
                 error:
                     "REGISTER_FAILED"
+
             }
         );
 
@@ -1419,13 +1545,16 @@ async function login(
     try {
 
         const data =
-            await readJSON(request);
+            await readJSON(
+                request
+            );
 
 
         const username =
             cleanUsername(
                 data.username
             );
+
 
         const password =
             data.password;
@@ -1457,10 +1586,13 @@ async function login(
                 response,
                 401,
                 {
+
                     error:
                         "INVALID_LOGIN"
+
                 }
             );
+
 
             return;
 
@@ -1480,10 +1612,13 @@ async function login(
                 response,
                 401,
                 {
+
                     error:
                         "INVALID_LOGIN"
+
                 }
             );
+
 
             return;
 
@@ -1539,8 +1674,10 @@ async function login(
             response,
             500,
             {
+
                 error:
                     "LOGIN_FAILED"
+
             }
         );
 
@@ -1561,7 +1698,9 @@ async function logout(
 ) {
 
     const session =
-        getSession(request);
+        getSession(
+            request
+        );
 
 
     if (session) {
@@ -1577,8 +1716,10 @@ async function logout(
         response,
         200,
         {
+
             success:
                 true
+
         }
     );
 
@@ -1629,27 +1770,26 @@ async function me(
             response,
             500,
             {
+
                 error:
                     "USER_LOOKUP_FAILED"
+
             }
         );
+
 
         return;
 
     }
 
 
-    /*
-    Mise à jour de la session.
-    Cela permet de récupérer une nouvelle
-    photo de profil si elle a changé.
-    */
-
     session.username =
         result.data.username;
 
+
     session.profilePicture =
-        result.data.profile_picture || null;
+        result.data.profile_picture ||
+        null;
 
 
     sendJSON(
@@ -1713,7 +1853,9 @@ async function listLogs(
             response,
             200,
             {
+
                 logs
+
             }
         );
 
@@ -1731,8 +1873,10 @@ async function listLogs(
             response,
             500,
             {
+
                 error:
                     "LOG_LIST_FAILED"
+
             }
         );
 
@@ -1765,10 +1909,13 @@ async function getLog(
                 response,
                 400,
                 {
+
                     error:
                         "INVALID_LOG_NUMBER"
+
                 }
             );
+
 
             return;
 
@@ -1776,8 +1923,13 @@ async function getLog(
 
 
         const normalized =
-            String(parsed)
-                .padStart(3, "0");
+            String(
+                parsed
+            )
+                .padStart(
+                    3,
+                    "0"
+                );
 
 
         const filePath =
@@ -1796,10 +1948,13 @@ async function getLog(
                 response,
                 404,
                 {
+
                     error:
                         "LOG_NOT_FOUND"
+
                 }
             );
+
 
             return;
 
@@ -1828,8 +1983,10 @@ async function getLog(
             response,
             500,
             {
+
                 error:
                     "LOG_READ_FAILED"
+
             }
         );
 
@@ -1959,8 +2116,366 @@ async function listMedia(
             response,
             500,
             {
+
                 error:
                     "MEDIA_LIST_FAILED"
+
+            }
+        );
+
+    }
+
+}
+
+
+/*
+=========================================================
+ LIBRARY OF BABEL
+=========================================================
+*/
+
+function validLibraryPageName(
+    filename
+) {
+
+    return (
+
+        typeof filename ===
+            "string" &&
+
+        filename.length >
+            0 &&
+
+        filename.length <=
+            255 &&
+
+        /^[a-zA-Z0-9._-]+\.txt$/i.test(
+            filename
+        ) &&
+
+        !filename.includes(
+            ".."
+        ) &&
+
+        !filename.includes(
+            "/"
+        ) &&
+
+        !filename.includes(
+            "\\"
+        )
+
+    );
+
+}
+
+
+async function listLibraryOfBabelPages() {
+
+    try {
+
+        const data =
+            await githubRequest(
+                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${LIBRARY_OF_BABEL_DIRECTORY}?ref=${GITHUB_BRANCH}`
+            );
+
+
+        if (
+            !Array.isArray(data)
+        ) {
+
+            return [];
+
+        }
+
+
+        return data
+
+            .filter(
+                file =>
+                    file.type === "file" &&
+                    /\.txt$/i.test(
+                        file.name
+                    )
+            )
+
+            .map(
+                file => ({
+
+                    name:
+                        file.name,
+
+                    path:
+                        file.path,
+
+                    size:
+                        file.size,
+
+                    url:
+                        file.download_url,
+
+                    github:
+                        file.html_url
+
+                })
+            )
+
+            .sort(
+                (a, b) =>
+                    a.name.localeCompare(
+                        b.name,
+                        undefined,
+                        {
+                            numeric:
+                                true
+                        }
+                    )
+            );
+
+    }
+
+    catch (error) {
+
+        if (
+            error.message.includes(
+                "GitHub API 404"
+            )
+        ) {
+
+            return [];
+
+        }
+
+        throw error;
+
+    }
+
+}
+
+
+async function getLibraryOfBabelPage(
+    filename
+) {
+
+    if (
+        !validLibraryPageName(
+            filename
+        )
+    ) {
+
+        return null;
+
+    }
+
+
+    const filePath =
+        `${LIBRARY_OF_BABEL_DIRECTORY}/${filename}`;
+
+
+    const file =
+        await githubReadFile(
+            filePath
+        );
+
+
+    if (!file) {
+
+        return null;
+
+    }
+
+
+    const size =
+        Buffer.byteLength(
+            file.content,
+            "utf8"
+        );
+
+
+    if (
+        size >
+        LIBRARY_OF_BABEL_MAX_FILE_SIZE
+    ) {
+
+        throw new Error(
+            "LIBRARY_PAGE_TOO_LARGE"
+        );
+
+    }
+
+
+    return {
+
+        name:
+            filename,
+
+        path:
+            filePath,
+
+        size,
+
+        content:
+            file.content
+
+    };
+
+}
+
+
+/*
+=========================================================
+ LIBRARY OF BABEL - LIST
+=========================================================
+*/
+
+async function listLibraryOfBabel(
+    request,
+    response
+) {
+
+    try {
+
+        const pages =
+            await listLibraryOfBabelPages();
+
+
+        sendJSON(
+            response,
+            200,
+            {
+
+                success:
+                    true,
+
+                directory:
+                    LIBRARY_OF_BABEL_DIRECTORY,
+
+                count:
+                    pages.length,
+
+                pages
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[LIBRARY OF BABEL LIST]",
+            error
+        );
+
+
+        sendJSON(
+            response,
+            500,
+            {
+
+                error:
+                    "LIBRARY_OF_BABEL_LIST_FAILED"
+
+            }
+        );
+
+    }
+
+}
+
+
+/*
+=========================================================
+ LIBRARY OF BABEL - READ PAGE
+=========================================================
+*/
+
+async function readLibraryOfBabel(
+    request,
+    response,
+    filename
+) {
+
+    try {
+
+        const page =
+            await getLibraryOfBabelPage(
+                filename
+            );
+
+
+        if (!page) {
+
+            sendJSON(
+                response,
+                404,
+                {
+
+                    error:
+                        "LIBRARY_PAGE_NOT_FOUND"
+
+                }
+            );
+
+
+            return;
+
+        }
+
+
+        sendJSON(
+            response,
+            200,
+            {
+
+                success:
+                    true,
+
+                page
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[LIBRARY OF BABEL READ]",
+            error
+        );
+
+
+        if (
+            error.message ===
+            "LIBRARY_PAGE_TOO_LARGE"
+        ) {
+
+            sendJSON(
+                response,
+                413,
+                {
+
+                    error:
+                        "LIBRARY_PAGE_TOO_LARGE"
+
+                }
+            );
+
+
+            return;
+
+        }
+
+
+        sendJSON(
+            response,
+            500,
+            {
+
+                error:
+                    "LIBRARY_PAGE_READ_FAILED"
+
             }
         );
 
@@ -1976,31 +2491,37 @@ async function listMedia(
 */
 
 const IMAGE_EXTENSIONS = [
+
     ".jpg",
     ".jpeg",
     ".png",
     ".gif",
     ".webp",
     ".bmp"
+
 ];
 
 
 const MUSIC_EXTENSIONS = [
+
     ".mp3",
     ".wav",
     ".ogg",
     ".flac",
     ".m4a",
     ".aac"
+
 ];
 
 
 const VIDEO_EXTENSIONS = [
+
     ".mp4",
     ".webm",
     ".mov",
     ".mkv",
     ".avi"
+
 ];
 
 
@@ -2008,7 +2529,9 @@ function cleanFilename(
     filename
 ) {
 
-    return String(filename)
+    return String(
+        filename
+    )
         .replace(
             /[^a-zA-Z0-9._-]/g,
             "_"
@@ -2026,7 +2549,9 @@ function uploadType(
 
 
     if (
-        IMAGE_EXTENSIONS.includes(ext)
+        IMAGE_EXTENSIONS.includes(
+            ext
+        )
     ) {
 
         return "picture";
@@ -2035,7 +2560,9 @@ function uploadType(
 
 
     if (
-        MUSIC_EXTENSIONS.includes(ext)
+        MUSIC_EXTENSIONS.includes(
+            ext
+        )
     ) {
 
         return "music";
@@ -2044,7 +2571,9 @@ function uploadType(
 
 
     if (
-        VIDEO_EXTENSIONS.includes(ext)
+        VIDEO_EXTENSIONS.includes(
+            ext
+        )
     ) {
 
         return "video";
@@ -2156,10 +2685,13 @@ async function upload(
             response,
             400,
             {
+
                 error:
                     "INVALID_UPLOAD"
+
             }
         );
+
 
         return;
 
@@ -2169,11 +2701,14 @@ async function upload(
     let fileBuffer =
         Buffer.alloc(0);
 
+
     let extension =
         "";
 
+
     let originalName =
         "";
+
 
     let uploadError =
         null;
@@ -2196,7 +2731,8 @@ async function upload(
             extension =
                 path.extname(
                     originalName
-                ).toLowerCase();
+                )
+                    .toLowerCase();
 
 
             const chunks =
@@ -2254,26 +2790,34 @@ async function upload(
                         response,
                         400,
                         {
+
                             error:
                                 uploadError
+
                         }
                     );
+
 
                     return;
 
                 }
 
 
-                if (!fileBuffer.length) {
+                if (
+                    !fileBuffer.length
+                ) {
 
                     sendJSON(
                         response,
                         400,
                         {
+
                             error:
                                 "NO_FILE"
+
                         }
                     );
+
 
                     return;
 
@@ -2292,10 +2836,13 @@ async function upload(
                         response,
                         400,
                         {
+
                             error:
                                 "FILE_TYPE_NOT_ALLOWED"
+
                         }
                     );
+
 
                     return;
 
@@ -2307,7 +2854,8 @@ async function upload(
 
 
                 if (
-                    type === "picture"
+                    type ===
+                    "picture"
                 ) {
 
                     directory =
@@ -2319,7 +2867,8 @@ async function upload(
                 }
 
                 else if (
-                    type === "music"
+                    type ===
+                    "music"
                 ) {
 
                     directory =
@@ -2400,8 +2949,10 @@ async function upload(
                     response,
                     500,
                     {
+
                         error:
                             "UPLOAD_FAILED"
+
                     }
                 );
 
@@ -2411,7 +2962,9 @@ async function upload(
     );
 
 
-    request.pipe(busboy);
+    request.pipe(
+        busboy
+    );
 
 }
 
@@ -2449,7 +3002,9 @@ async function deleteMedia(
 
 
     const filePath =
-        url.searchParams.get("path");
+        url.searchParams.get(
+            "path"
+        );
 
 
     if (!filePath) {
@@ -2458,10 +3013,13 @@ async function deleteMedia(
             response,
             400,
             {
+
                 error:
                     "PATH_REQUIRED"
+
             }
         );
+
 
         return;
 
@@ -2469,9 +3027,15 @@ async function deleteMedia(
 
 
     const allowed =
-        filePath.startsWith("picture/") ||
-        filePath.startsWith("media/music/") ||
-        filePath.startsWith("media/video/");
+        filePath.startsWith(
+            "picture/"
+        ) ||
+        filePath.startsWith(
+            "media/music/"
+        ) ||
+        filePath.startsWith(
+            "media/video/"
+        );
 
 
     if (!allowed) {
@@ -2480,10 +3044,13 @@ async function deleteMedia(
             response,
             403,
             {
+
                 error:
                     "PATH_NOT_ALLOWED"
+
             }
         );
+
 
         return;
 
@@ -2502,8 +3069,10 @@ async function deleteMedia(
             response,
             200,
             {
+
                 success:
                     true
+
             }
         );
 
@@ -2521,8 +3090,10 @@ async function deleteMedia(
             response,
             500,
             {
+
                 error:
                     "DELETE_FAILED"
+
             }
         );
 
@@ -2548,8 +3119,11 @@ function generateGuestName() {
         Math.floor(
             Math.random() * 10000
         )
-        .toString()
-        .padStart(4, "0")
+            .toString()
+            .padStart(
+                4,
+                "0"
+            )
     );
 
 }
@@ -2561,7 +3135,9 @@ function broadcast(
 ) {
 
     const serialized =
-        JSON.stringify(data);
+        JSON.stringify(
+            data
+        );
 
 
     for (
@@ -2604,7 +3180,9 @@ function sendWS(
     ) {
 
         ws.send(
-            JSON.stringify(data)
+            JSON.stringify(
+                data
+            )
         );
 
     }
@@ -2626,8 +3204,10 @@ const server =
 
 const wss =
     new WebSocket.Server({
+
         noServer:
             true
+
     });
 
 
@@ -2653,7 +3233,8 @@ server.on(
 
 
         if (
-            url.pathname !== "/ws"
+            url.pathname !==
+            "/ws"
         ) {
 
             socket.destroy();
@@ -2695,19 +3276,6 @@ wss.on(
         request
     ) => {
 
-        /*
-        =================================================
-        IMPORTANT :
-
-        Le navigateur ne peut pas facilement envoyer
-        Authorization avec new WebSocket().
-
-        Le HTML utilise donc :
-
-        /ws?token=XXXXXXXX
-        =================================================
-        */
-
         const url =
             new URL(
                 request.url,
@@ -2725,10 +3293,6 @@ wss.on(
             null;
 
 
-        /*
-        Recherche de la session
-        */
-
         if (token) {
 
             session =
@@ -2738,12 +3302,6 @@ wss.on(
 
         }
 
-
-        /*
-        =================================================
-        UTILISATEUR
-        =================================================
-        */
 
         const user = {
 
@@ -2866,11 +3424,11 @@ wss.on(
                                 data.message ||
                                 ""
                             )
-                            .trim()
-                            .slice(
-                                0,
-                                MESSAGE_LIMIT
-                            );
+                                .trim()
+                                .slice(
+                                    0,
+                                    MESSAGE_LIMIT
+                                );
 
 
                         if (!message) {
@@ -2880,24 +3438,16 @@ wss.on(
                         }
 
 
-                        /*
-                        IMPORTANT :
-
-                        On prend les informations
-                        de user, PAS celles envoyées
-                        par le navigateur.
-
-                        Cela empêche un client de
-                        prétendre être quelqu'un
-                        d'autre.
-                        */
-
                         const chatMessage = {
 
                             id:
                                 crypto
-                                    .randomBytes(8)
-                                    .toString("hex"),
+                                    .randomBytes(
+                                        8
+                                    )
+                                    .toString(
+                                        "hex"
+                                    ),
 
                             username:
                                 user.username,
@@ -2917,18 +3467,10 @@ wss.on(
                         };
 
 
-                        /*
-                        Sauvegarde GitHub
-                        */
-
                         await saveChatMessage(
                             chatMessage
                         );
 
-
-                        /*
-                        Envoi aux utilisateurs
-                        */
 
                         broadcast(
                             {
@@ -3054,7 +3596,9 @@ async function handleRequest(
 
 
     /*
+    =====================================================
     CORS
+    =====================================================
     */
 
     if (
@@ -3087,7 +3631,9 @@ async function handleRequest(
 
 
     /*
+    =====================================================
     HEALTH
+    =====================================================
     */
 
     if (
@@ -3119,13 +3665,16 @@ async function handleRequest(
             }
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     REGISTER
+    =====================================================
     */
 
     if (
@@ -3140,13 +3689,16 @@ async function handleRequest(
             response
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     LOGIN
+    =====================================================
     */
 
     if (
@@ -3161,13 +3713,16 @@ async function handleRequest(
             response
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     LOGOUT
+    =====================================================
     */
 
     if (
@@ -3182,13 +3737,16 @@ async function handleRequest(
             response
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     ME
+    =====================================================
     */
 
     if (
@@ -3203,13 +3761,16 @@ async function handleRequest(
             response
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     CHAT LOGS
+    =====================================================
     */
 
     if (
@@ -3223,6 +3784,7 @@ async function handleRequest(
             request,
             response
         );
+
 
         return;
 
@@ -3249,13 +3811,16 @@ async function handleRequest(
             number
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     MEDIA
+    =====================================================
     */
 
     if (
@@ -3270,13 +3835,16 @@ async function handleRequest(
             response
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     UPLOAD
+    =====================================================
     */
 
     if (
@@ -3291,13 +3859,16 @@ async function handleRequest(
             response
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     DELETE MEDIA
+    =====================================================
     */
 
     if (
@@ -3312,13 +3883,100 @@ async function handleRequest(
             response
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
+    LIBRARY OF BABEL
+    =====================================================
+    */
+
+    if (
+        url.pathname ===
+            "/api/libraryofbabel" &&
+        request.method ===
+            "GET"
+    ) {
+
+        await listLibraryOfBabel(
+            request,
+            response
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+    =====================================================
+    LIBRARY OF BABEL PAGE
+    =====================================================
+    */
+
+    if (
+        url.pathname.startsWith(
+            "/api/libraryofbabel/"
+        ) &&
+        request.method ===
+            "GET"
+    ) {
+
+        let filename;
+
+
+        try {
+
+            filename =
+                decodeURIComponent(
+                    url.pathname.slice(
+                        "/api/libraryofbabel/"
+                            .length
+                    )
+                );
+
+        }
+
+        catch {
+
+            sendJSON(
+                response,
+                400,
+                {
+
+                    error:
+                        "INVALID_LIBRARY_PAGE"
+
+                }
+            );
+
+
+            return;
+
+        }
+
+
+        await readLibraryOfBabel(
+            request,
+            response,
+            filename
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+    =====================================================
     CHAT STATUS
+    =====================================================
     */
 
     if (
@@ -3343,13 +4001,16 @@ async function handleRequest(
             }
         );
 
+
         return;
 
     }
 
 
     /*
+    =====================================================
     404
+    =====================================================
     */
 
     sendJSON(
@@ -3419,33 +4080,51 @@ server.listen(
             "========================================"
         );
 
+
         console.log(
-            " DREAMCORE SERVER V3"
+            " DREAMCORE SERVER V4"
         );
+
 
         console.log(
             "========================================"
         );
 
+
         console.log(
             `PORT : ${PORT}`
         );
+
 
         console.log(
             "WEBSOCKET : /ws"
         );
 
+
         console.log(
             `GITHUB : ${GITHUB_OWNER}/${GITHUB_REPO}`
         );
+
+
+        console.log(
+            `LIBRARY OF BABEL : ${LIBRARY_OF_BABEL_DIRECTORY}/`
+        );
+
+
+        console.log(
+            "API : /api/libraryofbabel"
+        );
+
 
         console.log(
             "SUPABASE : CONNECTED"
         );
 
+
         console.log(
             "WEBSOCKET AUTH : TOKEN QUERY"
         );
+
 
         console.log(
             "========================================"
@@ -3492,6 +4171,7 @@ process.on(
     "SIGTERM",
     shutdown
 );
+
 
 process.on(
     "SIGINT",
