@@ -1,5 +1,14 @@
 {
   "id": "chat-log001",
   "created": "2026-08-19T18:14:37.499Z",
-  "messages": []
+  "messages": [
+    {
+      "id": "8ea85e208352a5d6",
+      "username": "USER_1035",
+      "user_id": null,
+      "profile_picture": null,
+      "message": "hello",
+      "timestamp": "2026-08-19T18:14:37.366Z"
+    }
+  ]
 }
