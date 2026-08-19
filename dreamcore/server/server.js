@@ -2,6 +2,7 @@
 
 const http = require("http");
 const crypto = require("crypto");
+const path = require("path");
 const Busboy = require("busboy");
 const WebSocket = require("ws");
 const { createClient } = require("@supabase/supabase-js");
@@ -50,28 +51,22 @@ const USERNAME_MAX =
 
 /*
 =========================================================
- VERIFICATION CONFIG
+ VERIFICATION
 =========================================================
 */
 
 if (!SUPABASE_URL) {
-    console.error(
-        "[ERROR] SUPABASE_URL missing"
-    );
+    console.error("[ERROR] SUPABASE_URL missing");
     process.exit(1);
 }
 
 if (!SUPABASE_SECRET_KEY) {
-    console.error(
-        "[ERROR] SUPABASE_SECRET_KEY missing"
-    );
+    console.error("[ERROR] SUPABASE_SECRET_KEY missing");
     process.exit(1);
 }
 
 if (!GITHUB_TOKEN) {
-    console.error(
-        "[ERROR] GITHUB_TOKEN missing"
-    );
+    console.error("[ERROR] GITHUB_TOKEN missing");
     process.exit(1);
 }
 
@@ -192,7 +187,7 @@ async function githubRequest(
 
 /*
 =========================================================
- GITHUB FILE
+ GITHUB FILES
 =========================================================
 */
 
@@ -237,14 +232,10 @@ async function githubReadFile(
         );
 
 
-    if (!file) {
-
-        return null;
-
-    }
-
-
-    if (!file.content) {
+    if (
+        !file ||
+        !file.content
+    ) {
 
         return null;
 
@@ -313,9 +304,7 @@ async function githubWriteFile(
             },
 
             body:
-                JSON.stringify(
-                    body
-                )
+                JSON.stringify(body)
 
         }
     );
@@ -335,9 +324,7 @@ async function githubWriteBuffer(
         message,
 
         content:
-            buffer.toString(
-                "base64"
-            ),
+            buffer.toString("base64"),
 
         branch:
             GITHUB_BRANCH
@@ -368,9 +355,7 @@ async function githubWriteBuffer(
             },
 
             body:
-                JSON.stringify(
-                    body
-                )
+                JSON.stringify(body)
 
         }
     );
@@ -463,12 +448,14 @@ async function getLogFiles() {
 
                     const A =
                         parseInt(
-                            a.name.match(/\d+/)[0]
+                            a.name.match(/\d+/)[0],
+                            10
                         );
 
                     const B =
                         parseInt(
-                            b.name.match(/\d+/)[0]
+                            b.name.match(/\d+/)[0],
+                            10
                         );
 
                     return A - B;
@@ -585,7 +572,8 @@ async function getCurrentLog() {
 
         const next =
             parseInt(
-                last.name.match(/\d+/)[0]
+                last.name.match(/\d+/)[0],
+                10
             ) + 1;
 
 
@@ -649,11 +637,6 @@ async function saveChatMessage(
         );
 
 
-    /*
-    Si le message fait dépasser
-    15 Mo, créer un nouveau log.
-    */
-
     if (
         Buffer.byteLength(
             serialized,
@@ -672,7 +655,8 @@ async function saveChatMessage(
 
         const next =
             parseInt(
-                last.name.match(/\d+/)[0]
+                last.name.match(/\d+/)[0],
+                10
             ) + 1;
 
 
@@ -735,7 +719,7 @@ function pathName(
 
 /*
 =========================================================
- PASSWORD HASH
+ PASSWORD
 =========================================================
 */
 
@@ -750,12 +734,8 @@ function hashPassword(
         ) => {
 
             const salt =
-                crypto.randomBytes(
-                    16
-                )
-                .toString(
-                    "hex"
-                );
+                crypto.randomBytes(16)
+                    .toString("hex");
 
 
             crypto.scrypt(
@@ -774,10 +754,7 @@ function hashPassword(
 
                     if (error) {
 
-                        reject(
-                            error
-                        );
-
+                        reject(error);
                         return;
 
                     }
@@ -808,7 +785,8 @@ function verifyPassword(
         ) => {
 
             const parts =
-                stored.split(":");
+                String(stored || "")
+                    .split(":");
 
 
             if (
@@ -817,7 +795,6 @@ function verifyPassword(
             ) {
 
                 resolve(false);
-
                 return;
 
             }
@@ -849,10 +826,7 @@ function verifyPassword(
 
                     if (error) {
 
-                        reject(
-                            error
-                        );
-
+                        reject(error);
                         return;
 
                     }
@@ -876,7 +850,7 @@ function verifyPassword(
 
 /*
 =========================================================
- SESSION
+ SESSIONS
 =========================================================
 */
 
@@ -897,8 +871,7 @@ function createSession(
 ) {
 
     const token =
-        crypto
-            .randomBytes(32)
+        crypto.randomBytes(32)
             .toString("hex");
 
 
@@ -913,7 +886,7 @@ function createSession(
                 user.username,
 
             profilePicture:
-                user.profile_picture,
+                user.profile_picture || null,
 
             expires:
                 Date.now() +
@@ -938,9 +911,7 @@ function getSession(
 
     if (
         !header ||
-        !header.startsWith(
-            "Bearer "
-        )
+        !header.startsWith("Bearer ")
     ) {
 
         return null;
@@ -952,10 +923,26 @@ function getSession(
         header.slice(7);
 
 
+    return getSessionFromToken(
+        token
+    );
+
+}
+
+
+function getSessionFromToken(
+    token
+) {
+
+    if (!token) {
+
+        return null;
+
+    }
+
+
     const session =
-        sessions.get(
-            token
-        );
+        sessions.get(token);
 
 
     if (!session) {
@@ -970,9 +957,7 @@ function getSession(
         Date.now()
     ) {
 
-        sessions.delete(
-            token
-        );
+        sessions.delete(token);
 
         return null;
 
@@ -996,9 +981,7 @@ function requireSession(
 ) {
 
     const session =
-        getSession(
-            request
-        );
+        getSession(request);
 
 
     if (!session) {
@@ -1036,14 +1019,8 @@ function cleanUsername(
         username || ""
     )
         .trim()
-        .replace(
-            /\s+/g,
-            "_"
-        )
-        .slice(
-            0,
-            USERNAME_MAX
-        );
+        .replace(/\s+/g, "_")
+        .slice(0, USERNAME_MAX);
 
 }
 
@@ -1053,14 +1030,9 @@ function validUsername(
 ) {
 
     return (
-        username.length >=
-        USERNAME_MIN &&
-
-        username.length <=
-        USERNAME_MAX &&
-
-        /^[a-zA-Z0-9_-]+$/
-            .test(username)
+        username.length >= USERNAME_MIN &&
+        username.length <= USERNAME_MAX &&
+        /^[a-zA-Z0-9_-]+$/.test(username)
     );
 
 }
@@ -1097,24 +1069,13 @@ function validProfileURL(
     try {
 
         const url =
-            new URL(
-                value
-            );
+            new URL(value);
 
 
-        if (
-            url.protocol !==
-                "https:" &&
-            url.protocol !==
-                "http:"
-        ) {
-
-            return false;
-
-        }
-
-
-        return true;
+        return (
+            url.protocol === "https:" ||
+            url.protocol === "http:"
+        );
 
     }
 
@@ -1129,7 +1090,7 @@ function validProfileURL(
 
 /*
 =========================================================
- JSON / HTTP
+ HTTP JSON
 =========================================================
 */
 
@@ -1160,9 +1121,7 @@ function sendJSON(
 
 
     response.end(
-        JSON.stringify(
-            data
-        )
+        JSON.stringify(data)
     );
 
 }
@@ -1178,8 +1137,7 @@ async function readJSON(
             reject
         ) => {
 
-            let body =
-                "";
+            let body = "";
 
 
             request.on(
@@ -1188,6 +1146,7 @@ async function readJSON(
 
                     body +=
                         chunk.toString();
+
 
                     if (
                         body.length >
@@ -1249,7 +1208,7 @@ async function readJSON(
 
 /*
 =========================================================
- ACCOUNT API
+ REGISTER
 =========================================================
 */
 
@@ -1261,9 +1220,7 @@ async function register(
     try {
 
         const data =
-            await readJSON(
-                request
-            );
+            await readJSON(request);
 
 
         const username =
@@ -1271,10 +1228,8 @@ async function register(
                 data.username
             );
 
-
         const password =
             data.password;
-
 
         const profilePicture =
             data.profile_picture ||
@@ -1282,9 +1237,7 @@ async function register(
 
 
         if (
-            !validUsername(
-                username
-            )
+            !validUsername(username)
         ) {
 
             sendJSON(
@@ -1302,9 +1255,7 @@ async function register(
 
 
         if (
-            !validPassword(
-                password
-            )
+            !validPassword(password)
         ) {
 
             sendJSON(
@@ -1343,33 +1294,23 @@ async function register(
 
         const existing =
             await supabase
-
                 .from("users")
-
-                .select(
-                    "id"
-                )
-
+                .select("id")
                 .ilike(
                     "username",
                     username
                 )
-
                 .maybeSingle();
 
 
-        if (
-            existing.error
-        ) {
+        if (existing.error) {
 
             throw existing.error;
 
         }
 
 
-        if (
-            existing.data
-        ) {
+        if (existing.data) {
 
             sendJSON(
                 response,
@@ -1393,9 +1334,7 @@ async function register(
 
         const inserted =
             await supabase
-
                 .from("users")
-
                 .insert({
 
                     username,
@@ -1407,17 +1346,13 @@ async function register(
                         profilePicture
 
                 })
-
                 .select(
                     "id, username, profile_picture, created_at"
                 )
-
                 .single();
 
 
-        if (
-            inserted.error
-        ) {
+        if (inserted.error) {
 
             throw inserted.error;
 
@@ -1470,6 +1405,12 @@ async function register(
 }
 
 
+/*
+=========================================================
+ LOGIN
+=========================================================
+*/
+
 async function login(
     request,
     response
@@ -1478,9 +1419,7 @@ async function login(
     try {
 
         const data =
-            await readJSON(
-                request
-            );
+            await readJSON(request);
 
 
         const username =
@@ -1488,40 +1427,31 @@ async function login(
                 data.username
             );
 
-
         const password =
             data.password;
 
 
         const result =
             await supabase
-
                 .from("users")
-
                 .select(
                     "id, username, password_hash, profile_picture, created_at"
                 )
-
                 .ilike(
                     "username",
                     username
                 )
-
                 .maybeSingle();
 
 
-        if (
-            result.error
-        ) {
+        if (result.error) {
 
             throw result.error;
 
         }
 
 
-        if (
-            !result.data
-        ) {
+        if (!result.data) {
 
             sendJSON(
                 response,
@@ -1619,20 +1549,22 @@ async function login(
 }
 
 
+/*
+=========================================================
+ LOGOUT
+=========================================================
+*/
+
 async function logout(
     request,
     response
 ) {
 
     const session =
-        getSession(
-            request
-        );
+        getSession(request);
 
 
-    if (
-        session
-    ) {
+    if (session) {
 
         sessions.delete(
             session.token
@@ -1652,6 +1584,12 @@ async function logout(
 
 }
 
+
+/*
+=========================================================
+ ME
+=========================================================
+*/
 
 async function me(
     request,
@@ -1674,24 +1612,18 @@ async function me(
 
     const result =
         await supabase
-
             .from("users")
-
             .select(
                 "id, username, profile_picture, created_at"
             )
-
             .eq(
                 "id",
                 session.userId
             )
-
             .single();
 
 
-    if (
-        result.error
-    ) {
+    if (result.error) {
 
         sendJSON(
             response,
@@ -1705,6 +1637,19 @@ async function me(
         return;
 
     }
+
+
+    /*
+    Mise à jour de la session.
+    Cela permet de récupérer une nouvelle
+    photo de profil si elle a changé.
+    */
+
+    session.username =
+        result.data.username;
+
+    session.profilePicture =
+        result.data.profile_picture || null;
 
 
     sendJSON(
@@ -1726,7 +1671,7 @@ async function me(
 
 /*
 =========================================================
- CHAT ARCHIVE API
+ CHAT LOG API
 =========================================================
 */
 
@@ -1742,33 +1687,26 @@ async function listLogs(
 
 
         const logs =
-            [];
+            files.map(
+                file => ({
 
+                    name:
+                        file.name,
 
-        for (
-            const file of files
-        ) {
+                    path:
+                        `chat-log/${file.name}`,
 
-            logs.push({
+                    size:
+                        file.size,
 
-                name:
-                    file.name,
+                    sha:
+                        file.sha,
 
-                path:
-                    `chat-log/${file.name}`,
+                    url:
+                        file.html_url
 
-                size:
-                    file.size,
-
-                sha:
-                    file.sha,
-
-                url:
-                    file.html_url
-
-            });
-
-        }
+                })
+            );
 
 
         sendJSON(
@@ -1811,17 +1749,35 @@ async function getLog(
 
     try {
 
-        const normalized =
-            String(
-                parseInt(
-                    number,
-                    10
-                )
-            )
-            .padStart(
-                3,
-                "0"
+        const parsed =
+            parseInt(
+                number,
+                10
             );
+
+
+        if (
+            !Number.isFinite(parsed) ||
+            parsed < 1
+        ) {
+
+            sendJSON(
+                response,
+                400,
+                {
+                    error:
+                        "INVALID_LOG_NUMBER"
+                }
+            );
+
+            return;
+
+        }
+
+
+        const normalized =
+            String(parsed)
+                .padStart(3, "0");
 
 
         const filePath =
@@ -1884,7 +1840,7 @@ async function getLog(
 
 /*
 =========================================================
- MEDIA LIST
+ MEDIA
 =========================================================
 */
 
@@ -1959,10 +1915,12 @@ async function listMedia(
                 "picture"
             );
 
+
         const music =
             await listDirectory(
                 "media/music"
             );
+
 
         const videos =
             await listDirectory(
@@ -2026,6 +1984,7 @@ const IMAGE_EXTENSIONS = [
     ".bmp"
 ];
 
+
 const MUSIC_EXTENSIONS = [
     ".mp3",
     ".wav",
@@ -2034,6 +1993,7 @@ const MUSIC_EXTENSIONS = [
     ".m4a",
     ".aac"
 ];
+
 
 const VIDEO_EXTENSIONS = [
     ".mp4",
@@ -2048,9 +2008,7 @@ function cleanFilename(
     filename
 ) {
 
-    return String(
-        filename
-    )
+    return String(filename)
         .replace(
             /[^a-zA-Z0-9._-]/g,
             "_"
@@ -2068,9 +2026,7 @@ function uploadType(
 
 
     if (
-        IMAGE_EXTENSIONS.includes(
-            ext
-        )
+        IMAGE_EXTENSIONS.includes(ext)
     ) {
 
         return "picture";
@@ -2079,9 +2035,7 @@ function uploadType(
 
 
     if (
-        MUSIC_EXTENSIONS.includes(
-            ext
-        )
+        MUSIC_EXTENSIONS.includes(ext)
     ) {
 
         return "music";
@@ -2090,9 +2044,7 @@ function uploadType(
 
 
     if (
-        VIDEO_EXTENSIONS.includes(
-            ext
-        )
+        VIDEO_EXTENSIONS.includes(ext)
     ) {
 
         return "video";
@@ -2133,9 +2085,7 @@ async function getNextMediaNumber(
             );
 
 
-        if (
-            match
-        ) {
+        if (match) {
 
             highest =
                 Math.max(
@@ -2244,11 +2194,9 @@ async function upload(
 
 
             extension =
-                require("path")
-                    .extname(
-                        originalName
-                    )
-                    .toLowerCase();
+                path.extname(
+                    originalName
+                ).toLowerCase();
 
 
             const chunks =
@@ -2300,9 +2248,7 @@ async function upload(
 
             try {
 
-                if (
-                    uploadError
-                ) {
+                if (uploadError) {
 
                     sendJSON(
                         response,
@@ -2318,9 +2264,7 @@ async function upload(
                 }
 
 
-                if (
-                    !fileBuffer.length
-                ) {
+                if (!fileBuffer.length) {
 
                     sendJSON(
                         response,
@@ -2363,8 +2307,7 @@ async function upload(
 
 
                 if (
-                    type ===
-                    "picture"
+                    type === "picture"
                 ) {
 
                     directory =
@@ -2376,8 +2319,7 @@ async function upload(
                 }
 
                 else if (
-                    type ===
-                    "music"
+                    type === "music"
                 ) {
 
                     directory =
@@ -2469,9 +2411,7 @@ async function upload(
     );
 
 
-    request.pipe(
-        busboy
-    );
+    request.pipe(busboy);
 
 }
 
@@ -2509,9 +2449,7 @@ async function deleteMedia(
 
 
     const filePath =
-        url.searchParams.get(
-            "path"
-        );
+        url.searchParams.get("path");
 
 
     if (!filePath) {
@@ -2531,15 +2469,9 @@ async function deleteMedia(
 
 
     const allowed =
-        filePath.startsWith(
-            "picture/"
-        ) ||
-        filePath.startsWith(
-            "media/music/"
-        ) ||
-        filePath.startsWith(
-            "media/video/"
-        );
+        filePath.startsWith("picture/") ||
+        filePath.startsWith("media/music/") ||
+        filePath.startsWith("media/video/");
 
 
     if (!allowed) {
@@ -2614,14 +2546,10 @@ function generateGuestName() {
     return (
         "USER_" +
         Math.floor(
-            Math.random() *
-            10000
+            Math.random() * 10000
         )
         .toString()
-        .padStart(
-            4,
-            "0"
-        )
+        .padStart(4, "0")
     );
 
 }
@@ -2633,9 +2561,7 @@ function broadcast(
 ) {
 
     const serialized =
-        JSON.stringify(
-            data
-        );
+        JSON.stringify(data);
 
 
     for (
@@ -2643,8 +2569,7 @@ function broadcast(
     ) {
 
         if (
-            client ===
-            except
+            client === except
         ) {
 
             continue;
@@ -2679,15 +2604,19 @@ function sendWS(
     ) {
 
         ws.send(
-            JSON.stringify(
-                data
-            )
+            JSON.stringify(data)
         );
 
     }
 
 }
 
+
+/*
+=========================================================
+ HTTP SERVER
+=========================================================
+*/
 
 const server =
     http.createServer(
@@ -2701,6 +2630,12 @@ const wss =
             true
     });
 
+
+/*
+=========================================================
+ WEBSOCKET UPGRADE
+=========================================================
+*/
 
 server.on(
     "upgrade",
@@ -2718,8 +2653,7 @@ server.on(
 
 
         if (
-            url.pathname !==
-            "/ws"
+            url.pathname !== "/ws"
         ) {
 
             socket.destroy();
@@ -2748,6 +2682,12 @@ server.on(
 );
 
 
+/*
+=========================================================
+ WEBSOCKET CONNECTION
+=========================================================
+*/
+
 wss.on(
     "connection",
     (
@@ -2755,28 +2695,55 @@ wss.on(
         request
     ) => {
 
-        const auth =
-            request.headers.authorization;
+        /*
+        =================================================
+        IMPORTANT :
+
+        Le navigateur ne peut pas facilement envoyer
+        Authorization avec new WebSocket().
+
+        Le HTML utilise donc :
+
+        /ws?token=XXXXXXXX
+        =================================================
+        */
+
+        const url =
+            new URL(
+                request.url,
+                `http://${request.headers.host}`
+            );
+
+
+        const token =
+            url.searchParams.get(
+                "token"
+            );
 
 
         let session =
             null;
 
 
-        if (
-            auth &&
-            auth.startsWith(
-                "Bearer "
-            )
-        ) {
+        /*
+        Recherche de la session
+        */
+
+        if (token) {
 
             session =
-                sessions.get(
-                    auth.slice(7)
+                getSessionFromToken(
+                    token
                 );
 
         }
 
+
+        /*
+        =================================================
+        UTILISATEUR
+        =================================================
+        */
 
         const user = {
 
@@ -2795,7 +2762,12 @@ wss.on(
             profilePicture:
                 session
                     ? session.profilePicture
-                    : null
+                    : null,
+
+            authenticated:
+                Boolean(
+                    session
+                )
 
         };
 
@@ -2805,6 +2777,20 @@ wss.on(
             user
         );
 
+
+        console.log(
+            "[WS CONNECT]",
+            user.authenticated
+                ? `${user.username} [AUTHENTICATED]`
+                : `${user.username} [GUEST]`
+        );
+
+
+        /*
+        =================================================
+        WELCOME
+        =================================================
+        */
 
         sendWS(
             ws,
@@ -2816,14 +2802,24 @@ wss.on(
                 username:
                     user.username,
 
+                user_id:
+                    user.userId,
+
+                profile_picture:
+                    user.profilePicture,
+
                 authenticated:
-                    Boolean(
-                        user.userId
-                    )
+                    user.authenticated
 
             }
         );
 
+
+        /*
+        =================================================
+        USERS ONLINE
+        =================================================
+        */
 
         broadcast(
             {
@@ -2838,6 +2834,12 @@ wss.on(
         );
 
 
+        /*
+        =================================================
+        MESSAGES
+        =================================================
+        */
+
         ws.on(
             "message",
             async raw => {
@@ -2849,6 +2851,10 @@ wss.on(
                             raw.toString()
                         );
 
+
+                    /*
+                    MESSAGE
+                    */
 
                     if (
                         data.type ===
@@ -2867,23 +2873,31 @@ wss.on(
                             );
 
 
-                        if (
-                            !message
-                        ) {
+                        if (!message) {
 
                             return;
 
                         }
 
 
+                        /*
+                        IMPORTANT :
+
+                        On prend les informations
+                        de user, PAS celles envoyées
+                        par le navigateur.
+
+                        Cela empêche un client de
+                        prétendre être quelqu'un
+                        d'autre.
+                        */
+
                         const chatMessage = {
 
                             id:
                                 crypto
                                     .randomBytes(8)
-                                    .toString(
-                                        "hex"
-                                    ),
+                                    .toString("hex"),
 
                             username:
                                 user.username,
@@ -2903,10 +2917,18 @@ wss.on(
                         };
 
 
+                        /*
+                        Sauvegarde GitHub
+                        */
+
                         await saveChatMessage(
                             chatMessage
                         );
 
+
+                        /*
+                        Envoi aux utilisateurs
+                        */
 
                         broadcast(
                             {
@@ -2922,6 +2944,10 @@ wss.on(
 
                     }
 
+
+                    /*
+                    PING
+                    */
 
                     if (
                         data.type ===
@@ -2969,12 +2995,24 @@ wss.on(
         );
 
 
+        /*
+        =================================================
+        CLOSE
+        =================================================
+        */
+
         ws.on(
             "close",
             () => {
 
                 users.delete(
                     ws
+                );
+
+
+                console.log(
+                    "[WS DISCONNECT]",
+                    user.username
                 );
 
 
@@ -3092,9 +3130,9 @@ async function handleRequest(
 
     if (
         url.pathname ===
-        "/api/register" &&
+            "/api/register" &&
         request.method ===
-        "POST"
+            "POST"
     ) {
 
         await register(
@@ -3113,9 +3151,9 @@ async function handleRequest(
 
     if (
         url.pathname ===
-        "/api/login" &&
+            "/api/login" &&
         request.method ===
-        "POST"
+            "POST"
     ) {
 
         await login(
@@ -3134,9 +3172,9 @@ async function handleRequest(
 
     if (
         url.pathname ===
-        "/api/logout" &&
+            "/api/logout" &&
         request.method ===
-        "POST"
+            "POST"
     ) {
 
         await logout(
@@ -3155,9 +3193,9 @@ async function handleRequest(
 
     if (
         url.pathname ===
-        "/api/me" &&
+            "/api/me" &&
         request.method ===
-        "GET"
+            "GET"
     ) {
 
         await me(
@@ -3171,14 +3209,14 @@ async function handleRequest(
 
 
     /*
-    LOGS
+    CHAT LOGS
     */
 
     if (
         url.pathname ===
-        "/api/chat/logs" &&
+            "/api/chat/logs" &&
         request.method ===
-        "GET"
+            "GET"
     ) {
 
         await listLogs(
@@ -3196,7 +3234,7 @@ async function handleRequest(
             "/api/chat/log/"
         ) &&
         request.method ===
-        "GET"
+            "GET"
     ) {
 
         const number =
@@ -3222,9 +3260,9 @@ async function handleRequest(
 
     if (
         url.pathname ===
-        "/api/media" &&
+            "/api/media" &&
         request.method ===
-        "GET"
+            "GET"
     ) {
 
         await listMedia(
@@ -3259,7 +3297,7 @@ async function handleRequest(
 
 
     /*
-    DELETE
+    DELETE MEDIA
     */
 
     if (
@@ -3280,7 +3318,7 @@ async function handleRequest(
 
 
     /*
-    STATUS
+    CHAT STATUS
     */
 
     if (
@@ -3330,7 +3368,7 @@ async function handleRequest(
 
 /*
 =========================================================
- CLEAN SESSIONS
+ CLEAN EXPIRED SESSIONS
 =========================================================
 */
 
@@ -3382,7 +3420,7 @@ server.listen(
         );
 
         console.log(
-            " DREAMCORE SERVER V2"
+            " DREAMCORE SERVER V3"
         );
 
         console.log(
@@ -3403,6 +3441,10 @@ server.listen(
 
         console.log(
             "SUPABASE : CONNECTED"
+        );
+
+        console.log(
+            "WEBSOCKET AUTH : TOKEN QUERY"
         );
 
         console.log(
