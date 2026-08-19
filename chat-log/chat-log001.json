@@ -17,6 +17,14 @@
       "profile_picture": null,
       "message": "salut",
       "timestamp": "2026-08-19T18:15:07.282Z"
+    },
+    {
+      "id": "df1cea7771a92be8",
+      "username": "USER_7662",
+      "user_id": null,
+      "profile_picture": null,
+      "message": "hello",
+      "timestamp": "2026-08-19T18:15:17.065Z"
     }
   ]
 }
