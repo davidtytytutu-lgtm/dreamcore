@@ -7,7 +7,6 @@ const Busboy = require("busboy");
 const WebSocket = require("ws");
 const { createClient } = require("@supabase/supabase-js");
 
-
 /*
 =========================================================
  CONFIG
@@ -19,374 +18,39 @@ const PORT =
         process.env.PORT || 10000
     );
 
-
 const SUPABASE_URL =
     process.env.SUPABASE_URL;
-
 
 const SUPABASE_SECRET_KEY =
     process.env.SUPABASE_SECRET_KEY;
 
-
 const GITHUB_TOKEN =
     process.env.GITHUB_TOKEN;
-
 
 const GITHUB_OWNER =
     "davidtytytutu-lgtm";
 
-
 const GITHUB_REPO =
     "dreamcore";
-
 
 const GITHUB_BRANCH =
     "main";
 
-
 const CHAT_LOG_LIMIT =
     15 * 1024 * 1024;
-
 
 const UPLOAD_LIMIT =
     25 * 1024 * 1024;
 
-
 const MESSAGE_LIMIT =
     500;
-
 
 const USERNAME_MIN =
     3;
 
-
 const USERNAME_MAX =
     24;
 
-
-/*
-=========================================================
- LIBRARY OF BABEL CONFIG
-=========================================================
-*/
-
-const LIBRARY_OF_BABEL_DIRECTORY =
-    "libraryofbabel";
-
-
-const LIBRARY_OF_BABEL_MAX_FILE_SIZE =
-    1024 * 1024;
-
-/*
-=========================================================
- LIBRARY OF BABEL — DREAMCORE
-=========================================================
-*/
-
-async function githubListDirectory(
-    directory
-) {
-
-    try {
-
-        const encodedPath =
-            directory
-                .split("/")
-                .map(
-                    part =>
-                        encodeURIComponent(part)
-                )
-                .join("/");
-
-        return await githubRequest(
-            `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}?ref=${GITHUB_BRANCH}`
-        );
-
-    }
-
-    catch (error) {
-
-        if (
-            error.message.includes(
-                "GitHub API 404"
-            )
-        ) {
-
-            return [];
-
-        }
-
-        throw error;
-
-    }
-
-}
-
-
-async function listLibraryPages() {
-
-    const files =
-        await githubListDirectory(
-            "libraryofbabel"
-        );
-
-
-    const pages =
-        files
-
-            .filter(
-                file =>
-                    file.type === "file" &&
-                    /^page\d+\.txt$/i.test(
-                        file.name
-                    )
-            )
-
-            .map(
-                file => {
-
-                    const match =
-                        file.name.match(
-                            /^page(\d+)\.txt$/i
-                        );
-
-                    return {
-
-                        name:
-                            file.name,
-
-                        page:
-                            parseInt(
-                                match[1],
-                                10
-                            ),
-
-                        path:
-                            file.path,
-
-                        size:
-                            file.size,
-
-                        url:
-                            file.download_url,
-
-                        github:
-                            file.html_url
-
-                    };
-
-                }
-            )
-
-            .sort(
-                (a, b) =>
-                    a.page - b.page
-            );
-
-
-    return pages;
-
-}
-
-
-async function getLibraryPage(
-    pageNumber
-) {
-
-    const parsed =
-        parseInt(
-            pageNumber,
-            10
-        );
-
-
-    if (
-        !Number.isFinite(parsed) ||
-        parsed < 1
-    ) {
-
-        return null;
-
-    }
-
-
-    const filename =
-        `page${String(parsed).padStart(3, "0")}.txt`;
-
-
-    const filePath =
-        `libraryofbabel/${filename}`;
-
-
-    const file =
-        await githubReadFile(
-            filePath
-        );
-
-
-    if (!file) {
-
-        return null;
-
-    }
-
-
-    return {
-
-        page:
-            parsed,
-
-        name:
-            filename,
-
-        path:
-            filePath,
-
-        size:
-            Buffer.byteLength(
-                file.content,
-                "utf8"
-            ),
-
-        content:
-            file.content
-
-    };
-
-}
-
-
-async function libraryOfBabel(
-    request,
-    response
-) {
-
-    try {
-
-        const pages =
-            await listLibraryPages();
-
-
-        sendJSON(
-            response,
-            200,
-            {
-
-                success:
-                    true,
-
-                directory:
-                    "libraryofbabel",
-
-                count:
-                    pages.length,
-
-                pages
-
-            }
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "[LIBRARY OF BABEL]",
-            error
-        );
-
-
-        sendJSON(
-            response,
-            500,
-            {
-
-                error:
-                    "LIBRARY_OF_BABEL_FAILED",
-
-                message:
-                    error.message
-
-            }
-        );
-
-    }
-
-}
-
-
-async function libraryOfBabelPage(
-    request,
-    response,
-    pageNumber
-) {
-
-    try {
-
-        const page =
-            await getLibraryPage(
-                pageNumber
-            );
-
-
-        if (!page) {
-
-            sendJSON(
-                response,
-                404,
-                {
-
-                    error:
-                        "PAGE_NOT_FOUND"
-
-                }
-            );
-
-            return;
-
-        }
-
-
-        sendJSON(
-            response,
-            200,
-            {
-
-                success:
-                    true,
-
-                ...page
-
-            }
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "[LIBRARY PAGE]",
-            error
-        );
-
-
-        sendJSON(
-            response,
-            500,
-            {
-
-                error:
-                    "LIBRARY_PAGE_FAILED",
-
-                message:
-                    error.message
-
-            }
-        );
-
-    }
-
-}
 
 /*
 =========================================================
@@ -404,7 +68,6 @@ if (!SUPABASE_URL) {
 
 }
 
-
 if (!SUPABASE_SECRET_KEY) {
 
     console.error(
@@ -414,7 +77,6 @@ if (!SUPABASE_SECRET_KEY) {
     process.exit(1);
 
 }
-
 
 if (!GITHUB_TOKEN) {
 
@@ -438,17 +100,10 @@ const supabase =
         SUPABASE_URL,
         SUPABASE_SECRET_KEY,
         {
-
             auth: {
-
-                autoRefreshToken:
-                    false,
-
-                persistSession:
-                    false
-
+                autoRefreshToken: false,
+                persistSession: false
             }
-
         }
     );
 
@@ -550,6 +205,41 @@ async function githubRequest(
 
 /*
 =========================================================
+ GITHUB PATH
+=========================================================
+*/
+
+/*
+IMPORTANT :
+
+encodeURIComponent("libraryofbabel/page001.txt")
+
+produit :
+
+libraryofbabel%2Fpage001.txt
+
+Ce n'est pas idéal pour les chemins GitHub.
+
+On encode donc chaque partie séparément.
+*/
+
+function encodeGitHubPath(
+    filePath
+) {
+
+    return filePath
+        .split("/")
+        .map(
+            part =>
+                encodeURIComponent(part)
+        )
+        .join("/");
+
+}
+
+
+/*
+=========================================================
  GITHUB FILES
 =========================================================
 */
@@ -560,8 +250,14 @@ async function githubGetFile(
 
     try {
 
+        const encodedPath =
+            encodeGitHubPath(
+                filePath
+            );
+
+
         return await githubRequest(
-            `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(filePath)}?ref=${GITHUB_BRANCH}`
+            `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}?ref=${GITHUB_BRANCH}`
         );
 
     }
@@ -652,8 +348,14 @@ async function githubWriteFile(
     }
 
 
+    const encodedPath =
+        encodeGitHubPath(
+            filePath
+        );
+
+
     return await githubRequest(
-        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(filePath)}`,
+        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}`,
         {
 
             method:
@@ -703,8 +405,14 @@ async function githubWriteBuffer(
     }
 
 
+    const encodedPath =
+        encodeGitHubPath(
+            filePath
+        );
+
+
     return await githubRequest(
-        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(filePath)}`,
+        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}`,
         {
 
             method:
@@ -744,8 +452,14 @@ async function githubDeleteFile(
     }
 
 
+    const encodedPath =
+        encodeGitHubPath(
+            filePath
+        );
+
+
     await githubRequest(
-        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(filePath)}`,
+        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}`,
         {
 
             method:
@@ -854,7 +568,6 @@ async function createLog(
     const filename =
         `chat-log${String(number).padStart(3, "0")}.json`;
 
-
     const filePath =
         `chat-log/${filename}`;
 
@@ -867,8 +580,7 @@ async function createLog(
         created:
             new Date().toISOString(),
 
-        messages:
-            []
+        messages: []
 
     };
 
@@ -904,9 +616,7 @@ async function getCurrentLog() {
         files.length === 0
     ) {
 
-        return await createLog(
-            1
-        );
+        return await createLog(1);
 
     }
 
@@ -972,14 +682,10 @@ async function saveChatMessage(
 
     if (!file) {
 
-        await createLog(
-            1
-        );
-
+        await createLog(1);
 
         filePath =
             "chat-log/chat-log001.json";
-
 
         file =
             await githubReadFile(
@@ -1115,16 +821,9 @@ function hashPassword(
                 salt,
                 64,
                 {
-
-                    N:
-                        16384,
-
-                    r:
-                        8,
-
-                    p:
-                        1
-
+                    N: 16384,
+                    r: 8,
+                    p: 1
                 },
                 (
                     error,
@@ -1165,9 +864,7 @@ function verifyPassword(
         ) => {
 
             const parts =
-                String(
-                    stored || ""
-                )
+                String(stored || "")
                     .split(":");
 
 
@@ -1186,7 +883,6 @@ function verifyPassword(
             const salt =
                 parts[1];
 
-
             const original =
                 Buffer.from(
                     parts[2],
@@ -1199,16 +895,9 @@ function verifyPassword(
                 salt,
                 original.length,
                 {
-
-                    N:
-                        16384,
-
-                    r:
-                        8,
-
-                    p:
-                        1
-
+                    N: 16384,
+                    r: 8,
+                    p: 1
                 },
                 (
                     error,
@@ -1389,13 +1078,10 @@ function requireSession(
             response,
             401,
             {
-
                 error:
                     "NOT_AUTHENTICATED"
-
             }
         );
-
 
         return null;
 
@@ -1477,9 +1163,7 @@ function validProfileURL(
     try {
 
         const url =
-            new URL(
-                value
-            );
+            new URL(value);
 
 
         return (
@@ -1572,7 +1256,6 @@ async function readJSON(
                             )
                         );
 
-
                         request.destroy();
 
                     }
@@ -1644,10 +1327,8 @@ async function register(
                 data.username
             );
 
-
         const password =
             data.password;
-
 
         const profilePicture =
             data.profile_picture ||
@@ -1664,13 +1345,10 @@ async function register(
                 response,
                 400,
                 {
-
                     error:
                         "INVALID_USERNAME"
-
                 }
             );
-
 
             return;
 
@@ -1687,13 +1365,10 @@ async function register(
                 response,
                 400,
                 {
-
                     error:
                         "INVALID_PASSWORD"
-
                 }
             );
-
 
             return;
 
@@ -1710,13 +1385,10 @@ async function register(
                 response,
                 400,
                 {
-
                     error:
                         "INVALID_PROFILE_PICTURE_URL"
-
                 }
             );
-
 
             return;
 
@@ -1747,13 +1419,10 @@ async function register(
                 response,
                 409,
                 {
-
                     error:
                         "USERNAME_ALREADY_USED"
-
                 }
             );
-
 
             return;
 
@@ -1829,10 +1498,8 @@ async function register(
             response,
             500,
             {
-
                 error:
                     "REGISTER_FAILED"
-
             }
         );
 
@@ -1865,7 +1532,6 @@ async function login(
                 data.username
             );
 
-
         const password =
             data.password;
 
@@ -1896,13 +1562,10 @@ async function login(
                 response,
                 401,
                 {
-
                     error:
                         "INVALID_LOGIN"
-
                 }
             );
-
 
             return;
 
@@ -1922,13 +1585,10 @@ async function login(
                 response,
                 401,
                 {
-
                     error:
                         "INVALID_LOGIN"
-
                 }
             );
-
 
             return;
 
@@ -1984,10 +1644,8 @@ async function login(
             response,
             500,
             {
-
                 error:
                     "LOGIN_FAILED"
-
             }
         );
 
@@ -2026,10 +1684,8 @@ async function logout(
         response,
         200,
         {
-
             success:
                 true
-
         }
     );
 
@@ -2080,13 +1736,10 @@ async function me(
             response,
             500,
             {
-
                 error:
                     "USER_LOOKUP_FAILED"
-
             }
         );
-
 
         return;
 
@@ -2095,7 +1748,6 @@ async function me(
 
     session.username =
         result.data.username;
-
 
     session.profilePicture =
         result.data.profile_picture ||
@@ -2163,9 +1815,7 @@ async function listLogs(
             response,
             200,
             {
-
                 logs
-
             }
         );
 
@@ -2183,10 +1833,8 @@ async function listLogs(
             response,
             500,
             {
-
                 error:
                     "LOG_LIST_FAILED"
-
             }
         );
 
@@ -2219,13 +1867,10 @@ async function getLog(
                 response,
                 400,
                 {
-
                     error:
                         "INVALID_LOG_NUMBER"
-
                 }
             );
-
 
             return;
 
@@ -2233,13 +1878,8 @@ async function getLog(
 
 
         const normalized =
-            String(
-                parsed
-            )
-                .padStart(
-                    3,
-                    "0"
-                );
+            String(parsed)
+                .padStart(3, "0");
 
 
         const filePath =
@@ -2258,13 +1898,10 @@ async function getLog(
                 response,
                 404,
                 {
-
                     error:
                         "LOG_NOT_FOUND"
-
                 }
             );
-
 
             return;
 
@@ -2293,10 +1930,8 @@ async function getLog(
             response,
             500,
             {
-
                 error:
                     "LOG_READ_FAILED"
-
             }
         );
 
@@ -2307,7 +1942,7 @@ async function getLog(
 
 /*
 =========================================================
- MEDIA
+ GENERIC GITHUB DIRECTORY
 =========================================================
 */
 
@@ -2319,7 +1954,7 @@ async function listDirectory(
 
         const data =
             await githubRequest(
-                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${directory}?ref=${GITHUB_BRANCH}`
+                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeGitHubPath(directory)}?ref=${GITHUB_BRANCH}`
             );
 
 
@@ -2369,6 +2004,12 @@ async function listDirectory(
 
 }
 
+
+/*
+=========================================================
+ MEDIA
+=========================================================
+*/
 
 async function listMedia(
     request,
@@ -2426,10 +2067,8 @@ async function listMedia(
             response,
             500,
             {
-
                 error:
                     "MEDIA_LIST_FAILED"
-
             }
         );
 
@@ -2440,107 +2079,108 @@ async function listMedia(
 
 /*
 =========================================================
- LIBRARY OF BABEL
+ LIBRARY OF BABEL — DREAMCORE
 =========================================================
 */
 
-function validLibraryPageName(
-    filename
-) {
+/*
+Structure GitHub attendue :
 
-    return (
+dreamcore/
+└── libraryofbabel/
+    ├── page001.txt
+    ├── page002.txt
+    ├── page003.txt
+    └── ...
+*/
 
-        typeof filename ===
-            "string" &&
 
-        filename.length >
-            0 &&
+async function listLibraryPages() {
 
-        filename.length <=
-            255 &&
-
-        /^[a-zA-Z0-9._-]+\.txt$/i.test(
-            filename
-        ) &&
-
-        !filename.includes(
-            ".."
-        ) &&
-
-        !filename.includes(
-            "/"
-        ) &&
-
-        !filename.includes(
-            "\\"
-        )
-
+    console.log(
+        "[LIBRARY] Reading GitHub directory: libraryofbabel"
     );
 
-}
-
-
-async function listLibraryOfBabelPages() {
 
     try {
 
         const data =
             await githubRequest(
-                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${LIBRARY_OF_BABEL_DIRECTORY}?ref=${GITHUB_BRANCH}`
+                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/libraryofbabel?ref=${GITHUB_BRANCH}`
             );
 
 
-        if (
-            !Array.isArray(data)
-        ) {
+        if (!Array.isArray(data)) {
+
+            console.error(
+                "[LIBRARY] GitHub returned something other than a directory"
+            );
 
             return [];
 
         }
 
 
-        return data
+        const pages =
+            data
 
-            .filter(
-                file =>
-                    file.type === "file" &&
-                    /\.txt$/i.test(
-                        file.name
-                    )
-            )
+                .filter(
+                    file =>
+                        file.type === "file" &&
+                        /^page\d+\.txt$/i.test(
+                            file.name
+                        )
+                )
 
-            .map(
-                file => ({
+                .map(
+                    file => {
 
-                    name:
-                        file.name,
+                        const match =
+                            file.name.match(
+                                /^page(\d+)\.txt$/i
+                            );
 
-                    path:
-                        file.path,
 
-                    size:
-                        file.size,
+                        return {
 
-                    url:
-                        file.download_url,
+                            name:
+                                file.name,
 
-                    github:
-                        file.html_url
+                            page:
+                                parseInt(
+                                    match[1],
+                                    10
+                                ),
 
-                })
-            )
+                            path:
+                                file.path,
 
-            .sort(
-                (a, b) =>
-                    a.name.localeCompare(
-                        b.name,
-                        undefined,
-                        {
-                            numeric:
-                                true
-                        }
-                    )
-            );
+                            size:
+                                file.size,
+
+                            url:
+                                file.download_url,
+
+                            github:
+                                file.html_url
+
+                        };
+
+                    }
+                )
+
+                .sort(
+                    (a, b) =>
+                        a.page - b.page
+                );
+
+
+        console.log(
+            `[LIBRARY] ${pages.length} page(s) found`
+        );
+
+
+        return pages;
 
     }
 
@@ -2552,9 +2192,14 @@ async function listLibraryOfBabelPages() {
             )
         ) {
 
+            console.error(
+                "[LIBRARY] Directory not found: libraryofbabel"
+            );
+
             return [];
 
         }
+
 
         throw error;
 
@@ -2563,14 +2208,20 @@ async function listLibraryOfBabelPages() {
 }
 
 
-async function getLibraryOfBabelPage(
-    filename
+async function getLibraryPage(
+    pageNumber
 ) {
 
+    const parsed =
+        parseInt(
+            pageNumber,
+            10
+        );
+
+
     if (
-        !validLibraryPageName(
-            filename
-        )
+        !Number.isFinite(parsed) ||
+        parsed < 1
     ) {
 
         return null;
@@ -2578,8 +2229,17 @@ async function getLibraryOfBabelPage(
     }
 
 
+    const filename =
+        `page${String(parsed).padStart(3, "0")}.txt`;
+
+
     const filePath =
-        `${LIBRARY_OF_BABEL_DIRECTORY}/${filename}`;
+        `libraryofbabel/${filename}`;
+
+
+    console.log(
+        `[LIBRARY] Reading ${filePath}`
+    );
 
 
     const file =
@@ -2590,31 +2250,19 @@ async function getLibraryOfBabelPage(
 
     if (!file) {
 
+        console.log(
+            `[LIBRARY] Page not found: ${filePath}`
+        );
+
         return null;
 
     }
 
 
-    const size =
-        Buffer.byteLength(
-            file.content,
-            "utf8"
-        );
-
-
-    if (
-        size >
-        LIBRARY_OF_BABEL_MAX_FILE_SIZE
-    ) {
-
-        throw new Error(
-            "LIBRARY_PAGE_TOO_LARGE"
-        );
-
-    }
-
-
     return {
+
+        page:
+            parsed,
 
         name:
             filename,
@@ -2622,7 +2270,11 @@ async function getLibraryOfBabelPage(
         path:
             filePath,
 
-        size,
+        size:
+            Buffer.byteLength(
+                file.content,
+                "utf8"
+            ),
 
         content:
             file.content
@@ -2632,13 +2284,7 @@ async function getLibraryOfBabelPage(
 }
 
 
-/*
-=========================================================
- LIBRARY OF BABEL - LIST
-=========================================================
-*/
-
-async function listLibraryOfBabel(
+async function libraryOfBabel(
     request,
     response
 ) {
@@ -2646,7 +2292,7 @@ async function listLibraryOfBabel(
     try {
 
         const pages =
-            await listLibraryOfBabelPages();
+            await listLibraryPages();
 
 
         sendJSON(
@@ -2658,7 +2304,7 @@ async function listLibraryOfBabel(
                     true,
 
                 directory:
-                    LIBRARY_OF_BABEL_DIRECTORY,
+                    "libraryofbabel",
 
                 count:
                     pages.length,
@@ -2673,7 +2319,7 @@ async function listLibraryOfBabel(
     catch (error) {
 
         console.error(
-            "[LIBRARY OF BABEL LIST]",
+            "[LIBRARY OF BABEL]",
             error
         );
 
@@ -2684,7 +2330,10 @@ async function listLibraryOfBabel(
             {
 
                 error:
-                    "LIBRARY_OF_BABEL_LIST_FAILED"
+                    "LIBRARY_OF_BABEL_FAILED",
+
+                message:
+                    error.message
 
             }
         );
@@ -2694,23 +2343,17 @@ async function listLibraryOfBabel(
 }
 
 
-/*
-=========================================================
- LIBRARY OF BABEL - READ PAGE
-=========================================================
-*/
-
-async function readLibraryOfBabel(
+async function libraryOfBabelPage(
     request,
     response,
-    filename
+    pageNumber
 ) {
 
     try {
 
         const page =
-            await getLibraryOfBabelPage(
-                filename
+            await getLibraryPage(
+                pageNumber
             );
 
 
@@ -2722,11 +2365,13 @@ async function readLibraryOfBabel(
                 {
 
                     error:
-                        "LIBRARY_PAGE_NOT_FOUND"
+                        "PAGE_NOT_FOUND",
+
+                    page:
+                        Number(pageNumber)
 
                 }
             );
-
 
             return;
 
@@ -2741,7 +2386,7 @@ async function readLibraryOfBabel(
                 success:
                     true,
 
-                page
+                ...page
 
             }
         );
@@ -2751,31 +2396,9 @@ async function readLibraryOfBabel(
     catch (error) {
 
         console.error(
-            "[LIBRARY OF BABEL READ]",
+            "[LIBRARY PAGE]",
             error
         );
-
-
-        if (
-            error.message ===
-            "LIBRARY_PAGE_TOO_LARGE"
-        ) {
-
-            sendJSON(
-                response,
-                413,
-                {
-
-                    error:
-                        "LIBRARY_PAGE_TOO_LARGE"
-
-                }
-            );
-
-
-            return;
-
-        }
 
 
         sendJSON(
@@ -2784,7 +2407,10 @@ async function readLibraryOfBabel(
             {
 
                 error:
-                    "LIBRARY_PAGE_READ_FAILED"
+                    "LIBRARY_PAGE_FAILED",
+
+                message:
+                    error.message
 
             }
         );
@@ -2839,9 +2465,7 @@ function cleanFilename(
     filename
 ) {
 
-    return String(
-        filename
-    )
+    return String(filename)
         .replace(
             /[^a-zA-Z0-9._-]/g,
             "_"
@@ -2995,13 +2619,10 @@ async function upload(
             response,
             400,
             {
-
                 error:
                     "INVALID_UPLOAD"
-
             }
         );
-
 
         return;
 
@@ -3011,14 +2632,11 @@ async function upload(
     let fileBuffer =
         Buffer.alloc(0);
 
-
     let extension =
         "";
 
-
     let originalName =
         "";
-
 
     let uploadError =
         null;
@@ -3041,8 +2659,7 @@ async function upload(
             extension =
                 path.extname(
                     originalName
-                )
-                    .toLowerCase();
+                ).toLowerCase();
 
 
             const chunks =
@@ -3100,34 +2717,26 @@ async function upload(
                         response,
                         400,
                         {
-
                             error:
                                 uploadError
-
                         }
                     );
-
 
                     return;
 
                 }
 
 
-                if (
-                    !fileBuffer.length
-                ) {
+                if (!fileBuffer.length) {
 
                     sendJSON(
                         response,
                         400,
                         {
-
                             error:
                                 "NO_FILE"
-
                         }
                     );
-
 
                     return;
 
@@ -3146,13 +2755,10 @@ async function upload(
                         response,
                         400,
                         {
-
                             error:
                                 "FILE_TYPE_NOT_ALLOWED"
-
                         }
                     );
-
 
                     return;
 
@@ -3164,8 +2770,7 @@ async function upload(
 
 
                 if (
-                    type ===
-                    "picture"
+                    type === "picture"
                 ) {
 
                     directory =
@@ -3177,8 +2782,7 @@ async function upload(
                 }
 
                 else if (
-                    type ===
-                    "music"
+                    type === "music"
                 ) {
 
                     directory =
@@ -3259,10 +2863,8 @@ async function upload(
                     response,
                     500,
                     {
-
                         error:
                             "UPLOAD_FAILED"
-
                     }
                 );
 
@@ -3323,13 +2925,10 @@ async function deleteMedia(
             response,
             400,
             {
-
                 error:
                     "PATH_REQUIRED"
-
             }
         );
-
 
         return;
 
@@ -3354,13 +2953,10 @@ async function deleteMedia(
             response,
             403,
             {
-
                 error:
                     "PATH_NOT_ALLOWED"
-
             }
         );
-
 
         return;
 
@@ -3379,10 +2975,8 @@ async function deleteMedia(
             response,
             200,
             {
-
                 success:
                     true
-
             }
         );
 
@@ -3400,10 +2994,8 @@ async function deleteMedia(
             response,
             500,
             {
-
                 error:
                     "DELETE_FAILED"
-
             }
         );
 
@@ -3427,13 +3019,14 @@ function generateGuestName() {
     return (
         "USER_" +
         Math.floor(
-            Math.random() * 10000
+            Math.random() *
+            10000
         )
-            .toString()
-            .padStart(
-                4,
-                "0"
-            )
+        .toString()
+        .padStart(
+            4,
+            "0"
+        )
     );
 
 }
@@ -3654,12 +3247,6 @@ wss.on(
         );
 
 
-        /*
-        =================================================
-        WELCOME
-        =================================================
-        */
-
         sendWS(
             ws,
             {
@@ -3683,12 +3270,6 @@ wss.on(
         );
 
 
-        /*
-        =================================================
-        USERS ONLINE
-        =================================================
-        */
-
         broadcast(
             {
 
@@ -3702,12 +3283,6 @@ wss.on(
         );
 
 
-        /*
-        =================================================
-        MESSAGES
-        =================================================
-        */
-
         ws.on(
             "message",
             async raw => {
@@ -3720,10 +3295,6 @@ wss.on(
                         );
 
 
-                    /*
-                    MESSAGE
-                    */
-
                     if (
                         data.type ===
                         "message"
@@ -3734,11 +3305,11 @@ wss.on(
                                 data.message ||
                                 ""
                             )
-                                .trim()
-                                .slice(
-                                    0,
-                                    MESSAGE_LIMIT
-                                );
+                            .trim()
+                            .slice(
+                                0,
+                                MESSAGE_LIMIT
+                            );
 
 
                         if (!message) {
@@ -3752,12 +3323,8 @@ wss.on(
 
                             id:
                                 crypto
-                                    .randomBytes(
-                                        8
-                                    )
-                                    .toString(
-                                        "hex"
-                                    ),
+                                    .randomBytes(8)
+                                    .toString("hex"),
 
                             username:
                                 user.username,
@@ -3796,10 +3363,6 @@ wss.on(
 
                     }
 
-
-                    /*
-                    PING
-                    */
 
                     if (
                         data.type ===
@@ -3846,12 +3409,6 @@ wss.on(
             }
         );
 
-
-        /*
-        =================================================
-        CLOSE
-        =================================================
-        */
 
         ws.on(
             "close",
@@ -3975,7 +3532,6 @@ async function handleRequest(
             }
         );
 
-
         return;
 
     }
@@ -3998,7 +3554,6 @@ async function handleRequest(
             request,
             response
         );
-
 
         return;
 
@@ -4023,7 +3578,6 @@ async function handleRequest(
             response
         );
 
-
         return;
 
     }
@@ -4046,7 +3600,6 @@ async function handleRequest(
             request,
             response
         );
-
 
         return;
 
@@ -4071,7 +3624,6 @@ async function handleRequest(
             response
         );
 
-
         return;
 
     }
@@ -4094,7 +3646,6 @@ async function handleRequest(
             request,
             response
         );
-
 
         return;
 
@@ -4121,7 +3672,6 @@ async function handleRequest(
             number
         );
 
-
         return;
 
     }
@@ -4145,6 +3695,59 @@ async function handleRequest(
             response
         );
 
+        return;
+
+    }
+
+
+    /*
+    =====================================================
+    LIBRARY OF BABEL
+    =====================================================
+    */
+
+    if (
+        url.pathname ===
+            "/api/libraryofbabel" &&
+        request.method ===
+            "GET"
+    ) {
+
+        await libraryOfBabel(
+            request,
+            response
+        );
+
+        return;
+
+    }
+
+
+    /*
+    =====================================================
+    LIBRARY OF BABEL PAGE
+    =====================================================
+    */
+
+    if (
+        url.pathname.startsWith(
+            "/api/libraryofbabel/page/"
+        ) &&
+        request.method ===
+            "GET"
+    ) {
+
+        const pageNumber =
+            url.pathname
+                .split("/")
+                .pop();
+
+
+        await libraryOfBabelPage(
+            request,
+            response,
+            pageNumber
+        );
 
         return;
 
@@ -4169,7 +3772,6 @@ async function handleRequest(
             response
         );
 
-
         return;
 
     }
@@ -4192,91 +3794,6 @@ async function handleRequest(
             request,
             response
         );
-
-
-        return;
-
-    }
-
-
-    /*
-    =====================================================
-    LIBRARY OF BABEL
-    =====================================================
-    */
-
-    if (
-        url.pathname ===
-            "/api/libraryofbabel" &&
-        request.method ===
-            "GET"
-    ) {
-
-        await listLibraryOfBabel(
-            request,
-            response
-        );
-
-
-        return;
-
-    }
-
-
-    /*
-    =====================================================
-    LIBRARY OF BABEL PAGE
-    =====================================================
-    */
-
-    if (
-        url.pathname.startsWith(
-            "/api/libraryofbabel/"
-        ) &&
-        request.method ===
-            "GET"
-    ) {
-
-        let filename;
-
-
-        try {
-
-            filename =
-                decodeURIComponent(
-                    url.pathname.slice(
-                        "/api/libraryofbabel/"
-                            .length
-                    )
-                );
-
-        }
-
-        catch {
-
-            sendJSON(
-                response,
-                400,
-                {
-
-                    error:
-                        "INVALID_LIBRARY_PAGE"
-
-                }
-            );
-
-
-            return;
-
-        }
-
-
-        await readLibraryOfBabel(
-            request,
-            response,
-            filename
-        );
-
 
         return;
 
@@ -4310,7 +3827,6 @@ async function handleRequest(
 
             }
         );
-
 
         return;
 
@@ -4390,51 +3906,41 @@ server.listen(
             "========================================"
         );
 
-
         console.log(
             " DREAMCORE SERVER V4"
         );
-
 
         console.log(
             "========================================"
         );
 
-
         console.log(
             `PORT : ${PORT}`
         );
-
 
         console.log(
             "WEBSOCKET : /ws"
         );
 
-
         console.log(
             `GITHUB : ${GITHUB_OWNER}/${GITHUB_REPO}`
         );
 
-
         console.log(
-            `LIBRARY OF BABEL : ${LIBRARY_OF_BABEL_DIRECTORY}/`
+            "LIBRARY : /api/libraryofbabel"
         );
 
-
         console.log(
-            "API : /api/libraryofbabel"
+            "LIBRARY PAGE : /api/libraryofbabel/page/:number"
         );
-
 
         console.log(
             "SUPABASE : CONNECTED"
         );
 
-
         console.log(
             "WEBSOCKET AUTH : TOKEN QUERY"
         );
-
 
         console.log(
             "========================================"
