@@ -2076,7 +2076,368 @@ async function listMedia(
 
 }
 
+/*
+=========================================================
+ LIBRARY OF BABEL — DREAMCORE
+=========================================================
+*/
 
+const LIBRARY_PATH =
+    "libraryofbabel";
+
+const LIBRARY_PAGE_PREFIX =
+    "page";
+
+const LIBRARY_PAGE_EXTENSION =
+    ".txt";
+
+
+/*
+=========================================================
+ GITHUB PATH ENCODER
+=========================================================
+*/
+
+function encodeGitHubPath(filePath) {
+
+    return filePath
+        .split("/")
+        .map(
+            part => encodeURIComponent(part)
+        )
+        .join("/");
+
+}
+
+
+/*
+=========================================================
+ LIBRARY — GET PAGE
+=========================================================
+*/
+
+async function getLibraryPage(
+    request,
+    response,
+    pageNumber
+) {
+
+    try {
+
+        const page =
+            parseInt(
+                pageNumber,
+                10
+            );
+
+
+        /*
+        Vérification du numéro
+        */
+
+        if (
+            !Number.isInteger(page) ||
+            page < 1
+        ) {
+
+            sendJSON(
+                response,
+                400,
+                {
+                    error:
+                        "INVALID_PAGE",
+
+                    page:
+                        pageNumber
+                }
+            );
+
+            return;
+
+        }
+
+
+        /*
+        page001.txt
+        page002.txt
+        page003.txt
+        etc.
+        */
+
+        const filename =
+            `${LIBRARY_PAGE_PREFIX}${String(page).padStart(3, "0")}${LIBRARY_PAGE_EXTENSION}`;
+
+
+        const filePath =
+            `${LIBRARY_PATH}/${filename}`;
+
+
+        console.log(
+            `[LIBRARY] Reading ${filePath}`
+        );
+
+
+        /*
+        Lecture GitHub
+        */
+
+        const file =
+            await githubReadFile(
+                filePath
+            );
+
+
+        /*
+        Page inexistante
+        */
+
+        if (!file) {
+
+            console.log(
+                `[LIBRARY] Page not found: ${filePath}`
+            );
+
+
+            sendJSON(
+                response,
+                404,
+                {
+
+                    error:
+                        "PAGE_NOT_FOUND",
+
+                    page,
+
+                    filename,
+
+                    path:
+                        filePath
+
+                }
+            );
+
+
+            return;
+
+        }
+
+
+        /*
+        Réponse
+        */
+
+        sendJSON(
+            response,
+            200,
+            {
+
+                success:
+                    true,
+
+                page,
+
+                filename,
+
+                path:
+                    filePath,
+
+                content:
+                    file.content,
+
+                sha:
+                    file.sha
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[LIBRARY]",
+            error
+        );
+
+
+        sendJSON(
+            response,
+            500,
+            {
+
+                error:
+                    "LIBRARY_READ_FAILED",
+
+                message:
+                    error.message
+
+            }
+        );
+
+    }
+
+}
+
+
+/*
+=========================================================
+ LIBRARY — LIST PAGES
+=========================================================
+*/
+
+async function listLibraryPages(
+    request,
+    response
+) {
+
+    try {
+
+        const directory =
+            await githubRequest(
+                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeGitHubPath(LIBRARY_PATH)}?ref=${GITHUB_BRANCH}`
+            );
+
+
+        if (
+            !Array.isArray(directory)
+        ) {
+
+            sendJSON(
+                response,
+                500,
+                {
+
+                    error:
+                        "INVALID_LIBRARY_DIRECTORY"
+
+                }
+            );
+
+            return;
+
+        }
+
+
+        const pages =
+            directory
+
+                .filter(
+                    file =>
+                        file.type === "file" &&
+                        /^page\d+\.txt$/i.test(
+                            file.name
+                        )
+                )
+
+                .map(
+                    file => {
+
+                        const match =
+                            file.name.match(
+                                /^page(\d+)\.txt$/i
+                            );
+
+
+                        return {
+
+                            page:
+                                parseInt(
+                                    match[1],
+                                    10
+                                ),
+
+                            filename:
+                                file.name,
+
+                            path:
+                                file.path,
+
+                            size:
+                                file.size,
+
+                            url:
+                                file.download_url
+
+                        };
+
+                    }
+                )
+
+                .sort(
+                    (
+                        a,
+                        b
+                    ) =>
+                        a.page -
+                        b.page
+                );
+
+
+        sendJSON(
+            response,
+            200,
+            {
+
+                success:
+                    true,
+
+                count:
+                    pages.length,
+
+                pages
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "[LIBRARY LIST]",
+            error
+        );
+
+
+        if (
+            error.message.includes(
+                "GitHub API 404"
+            )
+        ) {
+
+            sendJSON(
+                response,
+                404,
+                {
+
+                    error:
+                        "LIBRARY_NOT_FOUND",
+
+                    path:
+                        LIBRARY_PATH
+
+                }
+            );
+
+            return;
+
+        }
+
+
+        sendJSON(
+            response,
+            500,
+            {
+
+                error:
+                    "LIBRARY_LIST_FAILED"
+
+            }
+        );
+
+    }
+
+}
 /*
 =========================================================
  LIBRARY OF BABEL — DREAMCORE
