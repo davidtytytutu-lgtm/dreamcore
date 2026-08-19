@@ -1,4 +1,6 @@
- {
+{
+  "messages": [
+    {
       "id": "0211d05a46ff7ec9",
       "username": "david",
       "user_id": "35218253-3930-4aca-a79b-b059ecd094b0",
@@ -6,3 +8,5 @@
       "message": "salut",
       "timestamp": "2026-08-19T19:10:13.146Z"
     }
+  ]
+}
