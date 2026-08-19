@@ -13,43 +13,23 @@ const { createClient } = require("@supabase/supabase-js");
 =========================================================
 */
 
-const PORT =
-    Number(
-        process.env.PORT || 10000
-    );
+const PORT = Number(process.env.PORT || 10000);
 
-const SUPABASE_URL =
-    process.env.SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
-const SUPABASE_SECRET_KEY =
-    process.env.SUPABASE_SECRET_KEY;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-const GITHUB_TOKEN =
-    process.env.GITHUB_TOKEN;
+const GITHUB_OWNER = "davidtytytutu-lgtm";
+const GITHUB_REPO = "dreamcore";
+const GITHUB_BRANCH = "main";
 
-const GITHUB_OWNER =
-    "davidtytytutu-lgtm";
+const CHAT_LOG_LIMIT = 15 * 1024 * 1024;
+const UPLOAD_LIMIT = 25 * 1024 * 1024;
+const MESSAGE_LIMIT = 500;
 
-const GITHUB_REPO =
-    "dreamcore";
-
-const GITHUB_BRANCH =
-    "main";
-
-const CHAT_LOG_LIMIT =
-    15 * 1024 * 1024;
-
-const UPLOAD_LIMIT =
-    25 * 1024 * 1024;
-
-const MESSAGE_LIMIT =
-    500;
-
-const USERNAME_MIN =
-    3;
-
-const USERNAME_MAX =
-    24;
+const USERNAME_MIN = 3;
+const USERNAME_MAX = 24;
 
 
 /*
@@ -59,33 +39,18 @@ const USERNAME_MAX =
 */
 
 if (!SUPABASE_URL) {
-
-    console.error(
-        "[ERROR] SUPABASE_URL missing"
-    );
-
+    console.error("[ERROR] SUPABASE_URL missing");
     process.exit(1);
-
 }
 
 if (!SUPABASE_SECRET_KEY) {
-
-    console.error(
-        "[ERROR] SUPABASE_SECRET_KEY missing"
-    );
-
+    console.error("[ERROR] SUPABASE_SECRET_KEY missing");
     process.exit(1);
-
 }
 
 if (!GITHUB_TOKEN) {
-
-    console.error(
-        "[ERROR] GITHUB_TOKEN missing"
-    );
-
+    console.error("[ERROR] GITHUB_TOKEN missing");
     process.exit(1);
-
 }
 
 
@@ -95,17 +60,16 @@ if (!GITHUB_TOKEN) {
 =========================================================
 */
 
-const supabase =
-    createClient(
-        SUPABASE_URL,
-        SUPABASE_SECRET_KEY,
-        {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
-            }
+const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_SECRET_KEY,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
         }
-    );
+    }
+);
 
 
 /*
@@ -114,76 +78,44 @@ const supabase =
 =========================================================
 */
 
-const GITHUB_API =
-    "https://api.github.com";
+const GITHUB_API = "https://api.github.com";
 
 
 function githubHeaders() {
-
     return {
-
-        "Authorization":
-            `Bearer ${GITHUB_TOKEN}`,
-
-        "Accept":
-            "application/vnd.github+json",
-
-        "X-GitHub-Api-Version":
-            "2022-11-28",
-
-        "User-Agent":
-            "Dreamcore-Server"
-
+        "Authorization": `Bearer ${GITHUB_TOKEN}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "Dreamcore-Server"
     };
-
 }
 
 
-async function githubRequest(
-    endpoint,
-    options = {}
-) {
+async function githubRequest(endpoint, options = {}) {
 
-    const response =
-        await fetch(
-            `${GITHUB_API}${endpoint}`,
-            {
+    const response = await fetch(
+        `${GITHUB_API}${endpoint}`,
+        {
+            ...options,
 
-                ...options,
-
-                headers: {
-
-                    ...githubHeaders(),
-
-                    ...(options.headers || {})
-
-                }
-
+            headers: {
+                ...githubHeaders(),
+                ...(options.headers || {})
             }
-        );
+        }
+    );
 
-
-    const text =
-        await response.text();
-
+    const text = await response.text();
 
     let data;
 
-
     try {
-
-        data =
-            JSON.parse(text);
-
+        data = JSON.parse(text);
     }
 
     catch {
-
-        data =
-            text;
-
+        data = text;
     }
-
 
     if (!response.ok) {
 
@@ -197,9 +129,7 @@ async function githubRequest(
 
     }
 
-
     return data;
-
 }
 
 
@@ -209,30 +139,11 @@ async function githubRequest(
 =========================================================
 */
 
-/*
-IMPORTANT :
-
-encodeURIComponent("libraryofbabel/page001.txt")
-
-produit :
-
-libraryofbabel%2Fpage001.txt
-
-Ce n'est pas idéal pour les chemins GitHub.
-
-On encode donc chaque partie séparément.
-*/
-
-function encodeGitHubPath(
-    filePath
-) {
+function encodeGitHubPath(filePath) {
 
     return filePath
         .split("/")
-        .map(
-            part =>
-                encodeURIComponent(part)
-        )
+        .map(part => encodeURIComponent(part))
         .join("/");
 
 }
@@ -244,17 +155,12 @@ function encodeGitHubPath(
 =========================================================
 */
 
-async function githubGetFile(
-    filePath
-) {
+async function githubGetFile(filePath) {
 
     try {
 
         const encodedPath =
-            encodeGitHubPath(
-                filePath
-            );
-
+            encodeGitHubPath(filePath);
 
         return await githubRequest(
             `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}?ref=${GITHUB_BRANCH}`
@@ -265,55 +171,37 @@ async function githubGetFile(
     catch (error) {
 
         if (
-            error.message.includes(
-                "GitHub API 404"
-            )
+            error.message.includes("GitHub API 404")
         ) {
-
             return null;
-
         }
 
         throw error;
-
     }
-
 }
 
 
-async function githubReadFile(
-    filePath
-) {
+async function githubReadFile(filePath) {
 
     const file =
-        await githubGetFile(
-            filePath
-        );
-
+        await githubGetFile(filePath);
 
     if (
         !file ||
         !file.content
     ) {
-
         return null;
-
     }
 
-
     return {
-
-        sha:
-            file.sha,
+        sha: file.sha,
 
         content:
             Buffer.from(
-                file.content,
+                file.content.replace(/\n/g, ""),
                 "base64"
             ).toString("utf8")
-
     };
-
 }
 
 
@@ -336,44 +224,29 @@ async function githubWriteFile(
 
         branch:
             GITHUB_BRANCH
-
     };
 
-
     if (sha) {
-
-        body.sha =
-            sha;
-
+        body.sha = sha;
     }
 
-
     const encodedPath =
-        encodeGitHubPath(
-            filePath
-        );
-
+        encodeGitHubPath(filePath);
 
     return await githubRequest(
         `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}`,
         {
-
-            method:
-                "PUT",
+            method: "PUT",
 
             headers: {
-
                 "Content-Type":
                     "application/json"
-
             },
 
             body:
                 JSON.stringify(body)
-
         }
     );
-
 }
 
 
@@ -393,44 +266,29 @@ async function githubWriteBuffer(
 
         branch:
             GITHUB_BRANCH
-
     };
 
-
     if (sha) {
-
-        body.sha =
-            sha;
-
+        body.sha = sha;
     }
 
-
     const encodedPath =
-        encodeGitHubPath(
-            filePath
-        );
-
+        encodeGitHubPath(filePath);
 
     return await githubRequest(
         `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}`,
         {
-
-            method:
-                "PUT",
+            method: "PUT",
 
             headers: {
-
                 "Content-Type":
                     "application/json"
-
             },
 
             body:
                 JSON.stringify(body)
-
         }
     );
-
 }
 
 
@@ -440,57 +298,35 @@ async function githubDeleteFile(
 ) {
 
     const file =
-        await githubGetFile(
-            filePath
-        );
-
+        await githubGetFile(filePath);
 
     if (!file) {
-
         return false;
-
     }
 
-
     const encodedPath =
-        encodeGitHubPath(
-            filePath
-        );
-
+        encodeGitHubPath(filePath);
 
     await githubRequest(
         `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedPath}`,
         {
-
-            method:
-                "DELETE",
+            method: "DELETE",
 
             headers: {
-
                 "Content-Type":
                     "application/json"
-
             },
 
             body:
                 JSON.stringify({
-
                     message,
-
-                    sha:
-                        file.sha,
-
-                    branch:
-                        GITHUB_BRANCH
-
+                    sha: file.sha,
+                    branch: GITHUB_BRANCH
                 })
-
         }
     );
 
-
     return true;
-
 }
 
 
@@ -509,6 +345,9 @@ async function getLogFiles() {
                 `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/chat-log?ref=${GITHUB_BRANCH}`
             );
 
+        if (!Array.isArray(data)) {
+            return [];
+        }
 
         return data
 
@@ -536,7 +375,6 @@ async function getLogFiles() {
                         );
 
                     return A - B;
-
                 }
             );
 
@@ -549,28 +387,21 @@ async function getLogFiles() {
                 "GitHub API 404"
             )
         ) {
-
             return [];
-
         }
 
         throw error;
-
     }
-
 }
 
 
-async function createLog(
-    number
-) {
+async function createLog(number) {
 
     const filename =
         `chat-log${String(number).padStart(3, "0")}.json`;
 
     const filePath =
         `chat-log/${filename}`;
-
 
     const data = {
 
@@ -581,9 +412,7 @@ async function createLog(
             new Date().toISOString(),
 
         messages: []
-
     };
-
 
     await githubWriteFile(
         filePath,
@@ -595,14 +424,11 @@ async function createLog(
         `Create ${filename}`
     );
 
-
     console.log(
         `[CHAT] Created ${filename}`
     );
 
-
     return filePath;
-
 }
 
 
@@ -611,34 +437,26 @@ async function getCurrentLog() {
     const files =
         await getLogFiles();
 
-
     if (
         files.length === 0
     ) {
-
         return await createLog(1);
-
     }
-
 
     const last =
         files[files.length - 1];
-
 
     const current =
         await githubReadFile(
             `chat-log/${last.name}`
         );
 
-
     if (!current) {
 
         return await createLog(
             files.length + 1
         );
-
     }
-
 
     if (
         Buffer.byteLength(
@@ -653,32 +471,20 @@ async function getCurrentLog() {
                 10
             ) + 1;
 
-
-        return await createLog(
-            next
-        );
-
+        return await createLog(next);
     }
 
-
     return `chat-log/${last.name}`;
-
 }
 
 
-async function saveChatMessage(
-    message
-) {
+async function saveChatMessage(message) {
 
     let filePath =
         await getCurrentLog();
 
-
     let file =
-        await githubReadFile(
-            filePath
-        );
-
+        await githubReadFile(filePath);
 
     if (!file) {
 
@@ -688,23 +494,13 @@ async function saveChatMessage(
             "chat-log/chat-log001.json";
 
         file =
-            await githubReadFile(
-                filePath
-            );
-
+            await githubReadFile(filePath);
     }
 
-
     let data =
-        JSON.parse(
-            file.content
-        );
+        JSON.parse(file.content);
 
-
-    data.messages.push(
-        message
-    );
-
+    data.messages.push(message);
 
     let serialized =
         JSON.stringify(
@@ -712,7 +508,6 @@ async function saveChatMessage(
             null,
             2
         );
-
 
     if (
         Buffer.byteLength(
@@ -725,10 +520,8 @@ async function saveChatMessage(
         const files =
             await getLogFiles();
 
-
         const last =
             files[files.length - 1];
-
 
         const next =
             parseInt(
@@ -736,29 +529,16 @@ async function saveChatMessage(
                 10
             ) + 1;
 
-
         filePath =
-            await createLog(
-                next
-            );
-
+            await createLog(next);
 
         file =
-            await githubReadFile(
-                filePath
-            );
-
+            await githubReadFile(filePath);
 
         data =
-            JSON.parse(
-                file.content
-            );
+            JSON.parse(file.content);
 
-
-        data.messages.push(
-            message
-        );
-
+        data.messages.push(message);
 
         serialized =
             JSON.stringify(
@@ -766,9 +546,7 @@ async function saveChatMessage(
                 null,
                 2
             );
-
     }
-
 
     await githubWriteFile(
         filePath,
@@ -777,15 +555,11 @@ async function saveChatMessage(
         file.sha
     );
 
-
     return filePath;
-
 }
 
 
-function pathName(
-    filePath
-) {
+function pathName(filePath) {
 
     return filePath
         .split("/")
@@ -800,21 +574,15 @@ function pathName(
 =========================================================
 */
 
-function hashPassword(
-    password
-) {
+function hashPassword(password) {
 
     return new Promise(
-        (
-            resolve,
-            reject
-        ) => {
+        (resolve, reject) => {
 
             const salt =
                 crypto
                     .randomBytes(16)
                     .toString("hex");
-
 
             crypto.scrypt(
                 password,
@@ -825,30 +593,24 @@ function hashPassword(
                     r: 8,
                     p: 1
                 },
+
                 (
                     error,
                     derivedKey
                 ) => {
 
                     if (error) {
-
                         reject(error);
-
                         return;
-
                     }
-
 
                     resolve(
                         `scrypt:${salt}:${derivedKey.toString("hex")}`
                     );
-
                 }
             );
-
         }
     );
-
 }
 
 
@@ -858,15 +620,11 @@ function verifyPassword(
 ) {
 
     return new Promise(
-        (
-            resolve,
-            reject
-        ) => {
+        (resolve, reject) => {
 
             const parts =
                 String(stored || "")
                     .split(":");
-
 
             if (
                 parts.length !== 3 ||
@@ -874,11 +632,8 @@ function verifyPassword(
             ) {
 
                 resolve(false);
-
                 return;
-
             }
-
 
             const salt =
                 parts[1];
@@ -889,7 +644,6 @@ function verifyPassword(
                     "hex"
                 );
 
-
             crypto.scrypt(
                 password,
                 salt,
@@ -899,19 +653,16 @@ function verifyPassword(
                     r: 8,
                     p: 1
                 },
+
                 (
                     error,
                     derived
                 ) => {
 
                     if (error) {
-
                         reject(error);
-
                         return;
-
                     }
-
 
                     resolve(
                         crypto.timingSafeEqual(
@@ -919,13 +670,10 @@ function verifyPassword(
                             derived
                         )
                     );
-
                 }
             );
-
         }
     );
-
 }
 
 
@@ -938,7 +686,6 @@ function verifyPassword(
 const sessions =
     new Map();
 
-
 const SESSION_DURATION =
     1000 *
     60 *
@@ -947,15 +694,12 @@ const SESSION_DURATION =
     7;
 
 
-function createSession(
-    user
-) {
+function createSession(user) {
 
     const token =
         crypto
             .randomBytes(32)
             .toString("hex");
-
 
     sessions.set(
         token,
@@ -973,91 +717,59 @@ function createSession(
             expires:
                 Date.now() +
                 SESSION_DURATION
-
         }
     );
 
-
     return token;
-
 }
 
 
-function getSession(
-    request
-) {
+function getSession(request) {
 
     const header =
         request.headers.authorization;
-
 
     if (
         !header ||
         !header.startsWith("Bearer ")
     ) {
-
         return null;
-
     }
-
 
     const token =
         header.slice(7);
 
-
-    return getSessionFromToken(
-        token
-    );
-
+    return getSessionFromToken(token);
 }
 
 
-function getSessionFromToken(
-    token
-) {
+function getSessionFromToken(token) {
 
     if (!token) {
-
         return null;
-
     }
-
 
     const session =
-        sessions.get(
-            token
-        );
-
+        sessions.get(token);
 
     if (!session) {
-
         return null;
-
     }
-
 
     if (
         session.expires <
         Date.now()
     ) {
 
-        sessions.delete(
-            token
-        );
+        sessions.delete(token);
 
         return null;
-
     }
 
-
     return {
-
         token,
-
         ...session
-
     };
-
 }
 
 
@@ -1067,10 +779,7 @@ function requireSession(
 ) {
 
     const session =
-        getSession(
-            request
-        );
-
+        getSession(request);
 
     if (!session) {
 
@@ -1084,12 +793,9 @@ function requireSession(
         );
 
         return null;
-
     }
 
-
     return session;
-
 }
 
 
@@ -1099,9 +805,7 @@ function requireSession(
 =========================================================
 */
 
-function cleanUsername(
-    username
-) {
+function cleanUsername(username) {
 
     return String(
         username || ""
@@ -1115,56 +819,43 @@ function cleanUsername(
             0,
             USERNAME_MAX
         );
-
 }
 
 
-function validUsername(
-    username
-) {
+function validUsername(username) {
 
     return (
         username.length >= USERNAME_MIN &&
         username.length <= USERNAME_MAX &&
         /^[a-zA-Z0-9_-]+$/.test(username)
     );
-
 }
 
 
-function validPassword(
-    password
-) {
+function validPassword(password) {
 
     return (
         typeof password === "string" &&
         password.length >= 8 &&
         password.length <= 128
     );
-
 }
 
 
-function validProfileURL(
-    value
-) {
+function validProfileURL(value) {
 
     if (
         value === null ||
         value === undefined ||
         value === ""
     ) {
-
         return true;
-
     }
-
 
     try {
 
         const url =
             new URL(value);
-
 
         return (
             url.protocol === "https:" ||
@@ -1174,11 +865,8 @@ function validProfileURL(
     }
 
     catch {
-
         return false;
-
     }
-
 }
 
 
@@ -1193,6 +881,10 @@ function sendJSON(
     status,
     data
 ) {
+
+    if (response.headersSent) {
+        return;
+    }
 
     response.writeHead(
         status,
@@ -1209,23 +901,16 @@ function sendJSON(
 
             "Access-Control-Allow-Methods":
                 "GET,POST,DELETE,OPTIONS"
-
         }
     );
 
-
     response.end(
-        JSON.stringify(
-            data
-        )
+        JSON.stringify(data)
     );
-
 }
 
 
-async function readJSON(
-    request
-) {
+async function readJSON(request) {
 
     return new Promise(
         (
@@ -1233,9 +918,7 @@ async function readJSON(
             reject
         ) => {
 
-            let body =
-                "";
-
+            let body = "";
 
             request.on(
                 "data",
@@ -1243,7 +926,6 @@ async function readJSON(
 
                     body +=
                         chunk.toString();
-
 
                     if (
                         body.length >
@@ -1257,12 +939,9 @@ async function readJSON(
                         );
 
                         request.destroy();
-
                     }
-
                 }
             );
-
 
             request.on(
                 "end",
@@ -1285,21 +964,16 @@ async function readJSON(
                                 "Invalid JSON"
                             )
                         );
-
                     }
-
                 }
             );
-
 
             request.on(
                 "error",
                 reject
             );
-
         }
     );
-
 }
 
 
@@ -1317,10 +991,7 @@ async function register(
     try {
 
         const data =
-            await readJSON(
-                request
-            );
-
+            await readJSON(request);
 
         const username =
             cleanUsername(
@@ -1334,11 +1005,8 @@ async function register(
             data.profile_picture ||
             null;
 
-
         if (
-            !validUsername(
-                username
-            )
+            !validUsername(username)
         ) {
 
             sendJSON(
@@ -1351,14 +1019,10 @@ async function register(
             );
 
             return;
-
         }
 
-
         if (
-            !validPassword(
-                password
-            )
+            !validPassword(password)
         ) {
 
             sendJSON(
@@ -1371,9 +1035,7 @@ async function register(
             );
 
             return;
-
         }
-
 
         if (
             !validProfileURL(
@@ -1391,9 +1053,7 @@ async function register(
             );
 
             return;
-
         }
-
 
         const existing =
             await supabase
@@ -1405,13 +1065,9 @@ async function register(
                 )
                 .maybeSingle();
 
-
         if (existing.error) {
-
             throw existing.error;
-
         }
-
 
         if (existing.data) {
 
@@ -1425,15 +1081,10 @@ async function register(
             );
 
             return;
-
         }
 
-
         const passwordHash =
-            await hashPassword(
-                password
-            );
-
+            await hashPassword(password);
 
         const inserted =
             await supabase
@@ -1447,26 +1098,20 @@ async function register(
 
                     profile_picture:
                         profilePicture
-
                 })
                 .select(
                     "id, username, profile_picture, created_at"
                 )
                 .single();
 
-
         if (inserted.error) {
-
             throw inserted.error;
-
         }
-
 
         const token =
             createSession(
                 inserted.data
             );
-
 
         sendJSON(
             response,
@@ -1480,7 +1125,6 @@ async function register(
 
                 user:
                     inserted.data
-
             }
         );
 
@@ -1493,7 +1137,6 @@ async function register(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -1502,9 +1145,7 @@ async function register(
                     "REGISTER_FAILED"
             }
         );
-
     }
-
 }
 
 
@@ -1522,10 +1163,7 @@ async function login(
     try {
 
         const data =
-            await readJSON(
-                request
-            );
-
+            await readJSON(request);
 
         const username =
             cleanUsername(
@@ -1534,7 +1172,6 @@ async function login(
 
         const password =
             data.password;
-
 
         const result =
             await supabase
@@ -1548,13 +1185,9 @@ async function login(
                 )
                 .maybeSingle();
 
-
         if (result.error) {
-
             throw result.error;
-
         }
-
 
         if (!result.data) {
 
@@ -1568,16 +1201,13 @@ async function login(
             );
 
             return;
-
         }
-
 
         const valid =
             await verifyPassword(
                 password,
                 result.data.password_hash
             );
-
 
         if (!valid) {
 
@@ -1591,15 +1221,12 @@ async function login(
             );
 
             return;
-
         }
-
 
         const token =
             createSession(
                 result.data
             );
-
 
         sendJSON(
             response,
@@ -1624,9 +1251,7 @@ async function login(
 
                     created_at:
                         result.data.created_at
-
                 }
-
             }
         );
 
@@ -1639,7 +1264,6 @@ async function login(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -1648,9 +1272,7 @@ async function login(
                     "LOGIN_FAILED"
             }
         );
-
     }
-
 }
 
 
@@ -1666,19 +1288,14 @@ async function logout(
 ) {
 
     const session =
-        getSession(
-            request
-        );
-
+        getSession(request);
 
     if (session) {
 
         sessions.delete(
             session.token
         );
-
     }
-
 
     sendJSON(
         response,
@@ -1688,7 +1305,6 @@ async function logout(
                 true
         }
     );
-
 }
 
 
@@ -1709,13 +1325,9 @@ async function me(
             response
         );
 
-
     if (!session) {
-
         return;
-
     }
-
 
     const result =
         await supabase
@@ -1729,7 +1341,6 @@ async function me(
             )
             .single();
 
-
     if (result.error) {
 
         sendJSON(
@@ -1742,9 +1353,7 @@ async function me(
         );
 
         return;
-
     }
-
 
     session.username =
         result.data.username;
@@ -1752,7 +1361,6 @@ async function me(
     session.profilePicture =
         result.data.profile_picture ||
         null;
-
 
     sendJSON(
         response,
@@ -1764,10 +1372,8 @@ async function me(
 
             user:
                 result.data
-
         }
     );
-
 }
 
 
@@ -1787,7 +1393,6 @@ async function listLogs(
         const files =
             await getLogFiles();
 
-
         const logs =
             files.map(
                 file => ({
@@ -1806,10 +1411,8 @@ async function listLogs(
 
                     url:
                         file.html_url
-
                 })
             );
-
 
         sendJSON(
             response,
@@ -1828,7 +1431,6 @@ async function listLogs(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -1837,9 +1439,7 @@ async function listLogs(
                     "LOG_LIST_FAILED"
             }
         );
-
     }
-
 }
 
 
@@ -1857,7 +1457,6 @@ async function getLog(
                 10
             );
 
-
         if (
             !Number.isFinite(parsed) ||
             parsed < 1
@@ -1873,24 +1472,19 @@ async function getLog(
             );
 
             return;
-
         }
-
 
         const normalized =
             String(parsed)
                 .padStart(3, "0");
 
-
         const filePath =
             `chat-log/chat-log${normalized}.json`;
-
 
         const file =
             await githubReadFile(
                 filePath
             );
-
 
         if (!file) {
 
@@ -1904,9 +1498,7 @@ async function getLog(
             );
 
             return;
-
         }
-
 
         sendJSON(
             response,
@@ -1925,7 +1517,6 @@ async function getLog(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -1934,9 +1525,7 @@ async function getLog(
                     "LOG_READ_FAILED"
             }
         );
-
     }
-
 }
 
 
@@ -1957,12 +1546,13 @@ async function listDirectory(
                 `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeGitHubPath(directory)}?ref=${GITHUB_BRANCH}`
             );
 
-
         return data
+
             .filter(
                 file =>
                     file.type === "file"
             )
+
             .map(
                 file => ({
 
@@ -1980,7 +1570,6 @@ async function listDirectory(
 
                     github:
                         file.html_url
-
                 })
             );
 
@@ -1995,13 +1584,10 @@ async function listDirectory(
         ) {
 
             return [];
-
         }
 
         throw error;
-
     }
-
 }
 
 
@@ -2023,18 +1609,15 @@ async function listMedia(
                 "picture"
             );
 
-
         const music =
             await listDirectory(
                 "media/music"
             );
 
-
         const videos =
             await listDirectory(
                 "media/video"
             );
-
 
         sendJSON(
             response,
@@ -2049,7 +1632,6 @@ async function listMedia(
 
                 video:
                     videos
-
             }
         );
 
@@ -2062,7 +1644,6 @@ async function listMedia(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -2071,14 +1652,13 @@ async function listMedia(
                     "MEDIA_LIST_FAILED"
             }
         );
-
     }
-
 }
+
 
 /*
 =========================================================
- LIBRARY OF BABEL — DREAMCORE
+ LIBRARY OF BABEL
 =========================================================
 */
 
@@ -2094,367 +1674,9 @@ const LIBRARY_PAGE_EXTENSION =
 
 /*
 =========================================================
- GITHUB PATH ENCODER
+ LIBRARY — LIST
 =========================================================
 */
-
-function encodeGitHubPath(filePath) {
-
-    return filePath
-        .split("/")
-        .map(
-            part => encodeURIComponent(part)
-        )
-        .join("/");
-
-}
-
-
-/*
-=========================================================
- LIBRARY — GET PAGE
-=========================================================
-*/
-
-async function getLibraryPage(
-    request,
-    response,
-    pageNumber
-) {
-
-    try {
-
-        const page =
-            parseInt(
-                pageNumber,
-                10
-            );
-
-
-        /*
-        Vérification du numéro
-        */
-
-        if (
-            !Number.isInteger(page) ||
-            page < 1
-        ) {
-
-            sendJSON(
-                response,
-                400,
-                {
-                    error:
-                        "INVALID_PAGE",
-
-                    page:
-                        pageNumber
-                }
-            );
-
-            return;
-
-        }
-
-
-        /*
-        page001.txt
-        page002.txt
-        page003.txt
-        etc.
-        */
-
-        const filename =
-            `${LIBRARY_PAGE_PREFIX}${String(page).padStart(3, "0")}${LIBRARY_PAGE_EXTENSION}`;
-
-
-        const filePath =
-            `${LIBRARY_PATH}/${filename}`;
-
-
-        console.log(
-            `[LIBRARY] Reading ${filePath}`
-        );
-
-
-        /*
-        Lecture GitHub
-        */
-
-        const file =
-            await githubReadFile(
-                filePath
-            );
-
-
-        /*
-        Page inexistante
-        */
-
-        if (!file) {
-
-            console.log(
-                `[LIBRARY] Page not found: ${filePath}`
-            );
-
-
-            sendJSON(
-                response,
-                404,
-                {
-
-                    error:
-                        "PAGE_NOT_FOUND",
-
-                    page,
-
-                    filename,
-
-                    path:
-                        filePath
-
-                }
-            );
-
-
-            return;
-
-        }
-
-
-        /*
-        Réponse
-        */
-
-        sendJSON(
-            response,
-            200,
-            {
-
-                success:
-                    true,
-
-                page,
-
-                filename,
-
-                path:
-                    filePath,
-
-                content:
-                    file.content,
-
-                sha:
-                    file.sha
-
-            }
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "[LIBRARY]",
-            error
-        );
-
-
-        sendJSON(
-            response,
-            500,
-            {
-
-                error:
-                    "LIBRARY_READ_FAILED",
-
-                message:
-                    error.message
-
-            }
-        );
-
-    }
-
-}
-
-
-/*
-=========================================================
- LIBRARY — LIST PAGES
-=========================================================
-*/
-
-async function listLibraryPages(
-    request,
-    response
-) {
-
-    try {
-
-        const directory =
-            await githubRequest(
-                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeGitHubPath(LIBRARY_PATH)}?ref=${GITHUB_BRANCH}`
-            );
-
-
-        if (
-            !Array.isArray(directory)
-        ) {
-
-            sendJSON(
-                response,
-                500,
-                {
-
-                    error:
-                        "INVALID_LIBRARY_DIRECTORY"
-
-                }
-            );
-
-            return;
-
-        }
-
-
-        const pages =
-            directory
-
-                .filter(
-                    file =>
-                        file.type === "file" &&
-                        /^page\d+\.txt$/i.test(
-                            file.name
-                        )
-                )
-
-                .map(
-                    file => {
-
-                        const match =
-                            file.name.match(
-                                /^page(\d+)\.txt$/i
-                            );
-
-
-                        return {
-
-                            page:
-                                parseInt(
-                                    match[1],
-                                    10
-                                ),
-
-                            filename:
-                                file.name,
-
-                            path:
-                                file.path,
-
-                            size:
-                                file.size,
-
-                            url:
-                                file.download_url
-
-                        };
-
-                    }
-                )
-
-                .sort(
-                    (
-                        a,
-                        b
-                    ) =>
-                        a.page -
-                        b.page
-                );
-
-
-        sendJSON(
-            response,
-            200,
-            {
-
-                success:
-                    true,
-
-                count:
-                    pages.length,
-
-                pages
-
-            }
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "[LIBRARY LIST]",
-            error
-        );
-
-
-        if (
-            error.message.includes(
-                "GitHub API 404"
-            )
-        ) {
-
-            sendJSON(
-                response,
-                404,
-                {
-
-                    error:
-                        "LIBRARY_NOT_FOUND",
-
-                    path:
-                        LIBRARY_PATH
-
-                }
-            );
-
-            return;
-
-        }
-
-
-        sendJSON(
-            response,
-            500,
-            {
-
-                error:
-                    "LIBRARY_LIST_FAILED"
-
-            }
-        );
-
-    }
-
-}
-/*
-=========================================================
- LIBRARY OF BABEL — DREAMCORE
-=========================================================
-*/
-
-/*
-Structure GitHub attendue :
-
-dreamcore/
-└── libraryofbabel/
-    ├── page001.txt
-    ├── page002.txt
-    ├── page003.txt
-    └── ...
-*/
-
 
 async function listLibraryPages() {
 
@@ -2462,25 +1684,23 @@ async function listLibraryPages() {
         "[LIBRARY] Reading GitHub directory: libraryofbabel"
     );
 
-
     try {
 
         const data =
             await githubRequest(
-                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/libraryofbabel?ref=${GITHUB_BRANCH}`
+                `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeGitHubPath(LIBRARY_PATH)}?ref=${GITHUB_BRANCH}`
             );
 
-
-        if (!Array.isArray(data)) {
+        if (
+            !Array.isArray(data)
+        ) {
 
             console.error(
                 "[LIBRARY] GitHub returned something other than a directory"
             );
 
             return [];
-
         }
-
 
         const pages =
             data
@@ -2500,7 +1720,6 @@ async function listLibraryPages() {
                             file.name.match(
                                 /^page(\d+)\.txt$/i
                             );
-
 
                         return {
 
@@ -2524,9 +1743,7 @@ async function listLibraryPages() {
 
                             github:
                                 file.html_url
-
                         };
-
                     }
                 )
 
@@ -2535,14 +1752,11 @@ async function listLibraryPages() {
                         a.page - b.page
                 );
 
-
         console.log(
             `[LIBRARY] ${pages.length} page(s) found`
         );
 
-
         return pages;
-
     }
 
     catch (error) {
@@ -2558,16 +1772,18 @@ async function listLibraryPages() {
             );
 
             return [];
-
         }
 
-
         throw error;
-
     }
-
 }
 
+
+/*
+=========================================================
+ LIBRARY — GET PAGE
+=========================================================
+*/
 
 async function getLibraryPage(
     pageNumber
@@ -2579,35 +1795,28 @@ async function getLibraryPage(
             10
         );
 
-
     if (
         !Number.isFinite(parsed) ||
         parsed < 1
     ) {
 
         return null;
-
     }
 
-
     const filename =
-        `page${String(parsed).padStart(3, "0")}.txt`;
-
+        `${LIBRARY_PAGE_PREFIX}${String(parsed).padStart(3, "0")}${LIBRARY_PAGE_EXTENSION}`;
 
     const filePath =
-        `libraryofbabel/${filename}`;
-
+        `${LIBRARY_PATH}/${filename}`;
 
     console.log(
         `[LIBRARY] Reading ${filePath}`
     );
 
-
     const file =
         await githubReadFile(
             filePath
         );
-
 
     if (!file) {
 
@@ -2616,9 +1825,7 @@ async function getLibraryPage(
         );
 
         return null;
-
     }
-
 
     return {
 
@@ -2638,12 +1845,19 @@ async function getLibraryPage(
             ),
 
         content:
-            file.content
+            file.content,
 
+        sha:
+            file.sha
     };
-
 }
 
+
+/*
+=========================================================
+ LIBRARY — API DIRECTORY
+=========================================================
+*/
 
 async function libraryOfBabel(
     request,
@@ -2655,7 +1869,6 @@ async function libraryOfBabel(
         const pages =
             await listLibraryPages();
 
-
         sendJSON(
             response,
             200,
@@ -2665,13 +1878,12 @@ async function libraryOfBabel(
                     true,
 
                 directory:
-                    "libraryofbabel",
+                    LIBRARY_PATH,
 
                 count:
                     pages.length,
 
                 pages
-
             }
         );
 
@@ -2684,7 +1896,6 @@ async function libraryOfBabel(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -2695,14 +1906,17 @@ async function libraryOfBabel(
 
                 message:
                     error.message
-
             }
         );
-
     }
-
 }
 
+
+/*
+=========================================================
+ LIBRARY — API PAGE
+=========================================================
+*/
 
 async function libraryOfBabelPage(
     request,
@@ -2717,7 +1931,6 @@ async function libraryOfBabelPage(
                 pageNumber
             );
 
-
         if (!page) {
 
             sendJSON(
@@ -2730,14 +1943,11 @@ async function libraryOfBabelPage(
 
                     page:
                         Number(pageNumber)
-
                 }
             );
 
             return;
-
         }
-
 
         sendJSON(
             response,
@@ -2748,7 +1958,6 @@ async function libraryOfBabelPage(
                     true,
 
                 ...page
-
             }
         );
 
@@ -2761,7 +1970,6 @@ async function libraryOfBabelPage(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -2772,68 +1980,11 @@ async function libraryOfBabelPage(
 
                 message:
                     error.message
-
             }
         );
-
     }
-
 }
 
-/*
-=========================================================
- LIBRARY OF BABEL
-=========================================================
-*/
-
-/*
-GET /api/libraryofbabel
-*/
-
-if (
-    url.pathname ===
-        "/api/libraryofbabel" &&
-    request.method ===
-        "GET"
-) {
-
-    await listLibraryPages(
-        request,
-        response
-    );
-
-    return;
-
-}
-
-
-/*
-GET /api/libraryofbabel/page/1
-*/
-
-if (
-    url.pathname.startsWith(
-        "/api/libraryofbabel/page/"
-    ) &&
-    request.method ===
-        "GET"
-) {
-
-    const pageNumber =
-        url.pathname
-            .split("/")
-            .pop();
-
-
-    await getLibraryPage(
-        request,
-        response,
-        pageNumber
-    );
-
-    return;
-
-}
 
 /*
 =========================================================
@@ -2842,96 +1993,66 @@ if (
 */
 
 const IMAGE_EXTENSIONS = [
-
     ".jpg",
     ".jpeg",
     ".png",
     ".gif",
     ".webp",
     ".bmp"
-
 ];
 
-
 const MUSIC_EXTENSIONS = [
-
     ".mp3",
     ".wav",
     ".ogg",
     ".flac",
     ".m4a",
     ".aac"
-
 ];
 
-
 const VIDEO_EXTENSIONS = [
-
     ".mp4",
     ".webm",
     ".mov",
     ".mkv",
     ".avi"
-
 ];
 
 
-function cleanFilename(
-    filename
-) {
+function cleanFilename(filename) {
 
     return String(filename)
         .replace(
             /[^a-zA-Z0-9._-]/g,
             "_"
         );
-
 }
 
 
-function uploadType(
-    extension
-) {
+function uploadType(extension) {
 
     const ext =
         extension.toLowerCase();
 
-
     if (
-        IMAGE_EXTENSIONS.includes(
-            ext
-        )
+        IMAGE_EXTENSIONS.includes(ext)
     ) {
-
         return "picture";
-
     }
 
-
     if (
-        MUSIC_EXTENSIONS.includes(
-            ext
-        )
+        MUSIC_EXTENSIONS.includes(ext)
     ) {
-
         return "music";
-
     }
-
 
     if (
-        VIDEO_EXTENSIONS.includes(
-            ext
-        )
+        VIDEO_EXTENSIONS.includes(ext)
     ) {
-
         return "video";
-
     }
-
 
     return null;
-
 }
 
 
@@ -2945,10 +2066,7 @@ async function getNextMediaNumber(
             directory
         );
 
-
-    let highest =
-        0;
-
+    let highest = 0;
 
     for (
         const file of files
@@ -2962,7 +2080,6 @@ async function getNextMediaNumber(
                 )
             );
 
-
         if (match) {
 
             highest =
@@ -2973,14 +2090,10 @@ async function getNextMediaNumber(
                         10
                     )
                 );
-
         }
-
     }
 
-
     return highest + 1;
-
 }
 
 
@@ -2995,22 +2108,16 @@ async function upload(
             response
         );
 
-
     if (!session) {
-
         return;
-
     }
 
-
     let busboy;
-
 
     try {
 
         busboy =
             Busboy({
-
                 headers:
                     request.headers,
 
@@ -3021,9 +2128,7 @@ async function upload(
 
                     files:
                         1
-
                 }
-
             });
 
     }
@@ -3040,9 +2145,7 @@ async function upload(
         );
 
         return;
-
     }
-
 
     let fileBuffer =
         Buffer.alloc(0);
@@ -3055,7 +2158,6 @@ async function upload(
 
     let uploadError =
         null;
-
 
     busboy.on(
         "file",
@@ -3070,39 +2172,27 @@ async function upload(
                     info.filename
                 );
 
-
             extension =
                 path.extname(
                     originalName
                 ).toLowerCase();
 
-
-            const chunks =
-                [];
-
+            const chunks = [];
 
             file.on(
                 "data",
                 chunk => {
-
-                    chunks.push(
-                        chunk
-                    );
-
+                    chunks.push(chunk);
                 }
             );
-
 
             file.on(
                 "limit",
                 () => {
-
                     uploadError =
                         "FILE_TOO_LARGE";
-
                 }
             );
-
 
             file.on(
                 "end",
@@ -3112,13 +2202,10 @@ async function upload(
                         Buffer.concat(
                             chunks
                         );
-
                 }
             );
-
         }
     );
-
 
     busboy.on(
         "finish",
@@ -3138,9 +2225,7 @@ async function upload(
                     );
 
                     return;
-
                 }
-
 
                 if (!fileBuffer.length) {
 
@@ -3154,15 +2239,12 @@ async function upload(
                     );
 
                     return;
-
                 }
-
 
                 const type =
                     uploadType(
                         extension
                     );
-
 
                 if (!type) {
 
@@ -3176,13 +2258,10 @@ async function upload(
                     );
 
                     return;
-
                 }
-
 
                 let directory;
                 let prefix;
-
 
                 if (
                     type === "picture"
@@ -3215,9 +2294,7 @@ async function upload(
 
                     prefix =
                         "video";
-
                 }
-
 
                 const number =
                     await getNextMediaNumber(
@@ -3225,21 +2302,17 @@ async function upload(
                         prefix
                     );
 
-
                 const filename =
                     `${prefix}${String(number).padStart(3, "0")}${extension}`;
 
-
                 const filePath =
                     `${directory}/${filename}`;
-
 
                 await githubWriteBuffer(
                     filePath,
                     fileBuffer,
                     `Upload ${filename}`
                 );
-
 
                 sendJSON(
                     response,
@@ -3260,7 +2333,6 @@ async function upload(
 
                         path:
                             filePath
-
                     }
                 );
 
@@ -3273,7 +2345,6 @@ async function upload(
                     error
                 );
 
-
                 sendJSON(
                     response,
                     500,
@@ -3282,17 +2353,11 @@ async function upload(
                             "UPLOAD_FAILED"
                     }
                 );
-
             }
-
         }
     );
 
-
-    request.pipe(
-        busboy
-    );
-
+    request.pipe(busboy);
 }
 
 
@@ -3313,13 +2378,9 @@ async function deleteMedia(
             response
         );
 
-
     if (!session) {
-
         return;
-
     }
-
 
     const url =
         new URL(
@@ -3327,12 +2388,8 @@ async function deleteMedia(
             `http://${request.headers.host}`
         );
 
-
     const filePath =
-        url.searchParams.get(
-            "path"
-        );
-
+        url.searchParams.get("path");
 
     if (!filePath) {
 
@@ -3346,21 +2403,12 @@ async function deleteMedia(
         );
 
         return;
-
     }
 
-
     const allowed =
-        filePath.startsWith(
-            "picture/"
-        ) ||
-        filePath.startsWith(
-            "media/music/"
-        ) ||
-        filePath.startsWith(
-            "media/video/"
-        );
-
+        filePath.startsWith("picture/") ||
+        filePath.startsWith("media/music/") ||
+        filePath.startsWith("media/video/");
 
     if (!allowed) {
 
@@ -3374,9 +2422,7 @@ async function deleteMedia(
         );
 
         return;
-
     }
-
 
     try {
 
@@ -3384,7 +2430,6 @@ async function deleteMedia(
             filePath,
             `Delete ${filePath}`
         );
-
 
         sendJSON(
             response,
@@ -3404,7 +2449,6 @@ async function deleteMedia(
             error
         );
 
-
         sendJSON(
             response,
             500,
@@ -3413,9 +2457,7 @@ async function deleteMedia(
                     "DELETE_FAILED"
             }
         );
-
     }
-
 }
 
 
@@ -3434,8 +2476,7 @@ function generateGuestName() {
     return (
         "USER_" +
         Math.floor(
-            Math.random() *
-            10000
+            Math.random() * 10000
         )
         .toString()
         .padStart(
@@ -3443,7 +2484,6 @@ function generateGuestName() {
             "0"
         )
     );
-
 }
 
 
@@ -3453,10 +2493,7 @@ function broadcast(
 ) {
 
     const serialized =
-        JSON.stringify(
-            data
-        );
-
+        JSON.stringify(data);
 
     for (
         const client of wss.clients
@@ -3465,11 +2502,8 @@ function broadcast(
         if (
             client === except
         ) {
-
             continue;
-
         }
-
 
         if (
             client.readyState ===
@@ -3479,11 +2513,8 @@ function broadcast(
             client.send(
                 serialized
             );
-
         }
-
     }
-
 }
 
 
@@ -3498,13 +2529,9 @@ function sendWS(
     ) {
 
         ws.send(
-            JSON.stringify(
-                data
-            )
+            JSON.stringify(data)
         );
-
     }
-
 }
 
 
@@ -3519,13 +2546,10 @@ const server =
         handleRequest
     );
 
-
 const wss =
     new WebSocket.Server({
-
         noServer:
             true
-
     });
 
 
@@ -3549,18 +2573,13 @@ server.on(
                 `http://${request.headers.host}`
             );
 
-
         if (
-            url.pathname !==
-            "/ws"
+            url.pathname !== "/ws"
         ) {
 
             socket.destroy();
-
             return;
-
         }
-
 
         wss.handleUpgrade(
             request,
@@ -3573,10 +2592,8 @@ server.on(
                     ws,
                     request
                 );
-
             }
         );
-
     }
 );
 
@@ -3600,16 +2617,12 @@ wss.on(
                 `http://${request.headers.host}`
             );
 
-
         const token =
             url.searchParams.get(
                 "token"
             );
 
-
-        let session =
-            null;
-
+        let session = null;
 
         if (token) {
 
@@ -3617,9 +2630,7 @@ wss.on(
                 getSessionFromToken(
                     token
                 );
-
         }
-
 
         const user = {
 
@@ -3641,18 +2652,13 @@ wss.on(
                     : null,
 
             authenticated:
-                Boolean(
-                    session
-                )
-
+                Boolean(session)
         };
-
 
         users.set(
             ws,
             user
         );
-
 
         console.log(
             "[WS CONNECT]",
@@ -3660,7 +2666,6 @@ wss.on(
                 ? `${user.username} [AUTHENTICATED]`
                 : `${user.username} [GUEST]`
         );
-
 
         sendWS(
             ws,
@@ -3680,10 +2685,8 @@ wss.on(
 
                 authenticated:
                     user.authenticated
-
             }
         );
-
 
         broadcast(
             {
@@ -3693,10 +2696,8 @@ wss.on(
 
                 count:
                     users.size
-
             }
         );
-
 
         ws.on(
             "message",
@@ -3709,7 +2710,6 @@ wss.on(
                             raw.toString()
                         );
 
-
                     if (
                         data.type ===
                         "message"
@@ -3717,8 +2717,7 @@ wss.on(
 
                         const message =
                             String(
-                                data.message ||
-                                ""
+                                data.message || ""
                             )
                             .trim()
                             .slice(
@@ -3726,13 +2725,9 @@ wss.on(
                                 MESSAGE_LIMIT
                             );
 
-
                         if (!message) {
-
                             return;
-
                         }
-
 
                         const chatMessage = {
 
@@ -3755,14 +2750,11 @@ wss.on(
                             timestamp:
                                 new Date()
                                     .toISOString()
-
                         };
-
 
                         await saveChatMessage(
                             chatMessage
                         );
-
 
                         broadcast(
                             {
@@ -3772,12 +2764,9 @@ wss.on(
 
                                 data:
                                     chatMessage
-
                             }
                         );
-
                     }
-
 
                     if (
                         data.type ===
@@ -3787,13 +2776,10 @@ wss.on(
                         sendWS(
                             ws,
                             {
-
                                 type:
                                     "pong"
-
                             }
                         );
-
                     }
 
                 }
@@ -3805,7 +2791,6 @@ wss.on(
                         error
                     );
 
-
                     sendWS(
                         ws,
                         {
@@ -3815,15 +2800,11 @@ wss.on(
 
                             message:
                                 "SERVER_ERROR"
-
                         }
                     );
-
                 }
-
             }
         );
-
 
         ws.on(
             "close",
@@ -3833,12 +2814,10 @@ wss.on(
                     ws
                 );
 
-
                 console.log(
                     "[WS DISCONNECT]",
                     user.username
                 );
-
 
                 broadcast(
                     {
@@ -3848,13 +2827,10 @@ wss.on(
 
                         count:
                             users.size
-
                     }
                 );
-
             }
         );
-
     }
 );
 
@@ -3900,15 +2876,12 @@ async function handleRequest(
 
                 "Access-Control-Allow-Headers":
                     "Content-Type, Authorization"
-
             }
         );
-
 
         response.end();
 
         return;
-
     }
 
 
@@ -3943,12 +2916,10 @@ async function handleRequest(
                 time:
                     new Date()
                         .toISOString()
-
             }
         );
 
         return;
-
     }
 
 
@@ -3971,7 +2942,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -3994,7 +2964,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4017,7 +2986,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4040,7 +3008,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4063,7 +3030,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4080,7 +3046,6 @@ async function handleRequest(
                 .split("/")
                 .pop();
 
-
         await getLog(
             request,
             response,
@@ -4088,7 +3053,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4111,7 +3075,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4134,7 +3097,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4157,7 +3119,6 @@ async function handleRequest(
                 .split("/")
                 .pop();
 
-
         await libraryOfBabelPage(
             request,
             response,
@@ -4165,7 +3126,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4188,7 +3148,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4211,7 +3170,6 @@ async function handleRequest(
         );
 
         return;
-
     }
 
 
@@ -4239,12 +3197,10 @@ async function handleRequest(
 
                 websocket:
                     "/ws"
-
             }
         );
 
         return;
-
     }
 
 
@@ -4258,13 +3214,10 @@ async function handleRequest(
         response,
         404,
         {
-
             error:
                 "NOT_FOUND"
-
         }
     );
-
 }
 
 
@@ -4279,7 +3232,6 @@ setInterval(
 
         const now =
             Date.now();
-
 
         for (
             const [
@@ -4296,9 +3248,7 @@ setInterval(
                 sessions.delete(
                     token
                 );
-
             }
-
         }
 
     },
@@ -4322,7 +3272,7 @@ server.listen(
         );
 
         console.log(
-            " DREAMCORE SERVER V4"
+            " DREAMCORE SERVER V5"
         );
 
         console.log(
@@ -4360,7 +3310,6 @@ server.listen(
         console.log(
             "========================================"
         );
-
     }
 );
 
@@ -4377,24 +3326,18 @@ function shutdown() {
         "[DREAMCORE] Shutdown"
     );
 
-
     for (
         const client of wss.clients
     ) {
 
         client.close();
-
     }
-
 
     server.close(
         () => {
-
             process.exit(0);
-
         }
     );
-
 }
 
 
@@ -4402,7 +3345,6 @@ process.on(
     "SIGTERM",
     shutdown
 );
-
 
 process.on(
     "SIGINT",
