@@ -1063,7 +1063,7 @@ header::after {
   logo DREAMCORE
 ========================================================= */
 
-#dreamcoreArchiveText {
+#dreamcoreArchive {
 
     transition:
         opacity 0.35s ease,
@@ -1073,7 +1073,7 @@ header::after {
 }
 
 
-#dreamcoreArchiveText.archive-changing {
+#dreamcoreArchive.archive-changing {
 
     opacity: 0;
 
@@ -2852,7 +2852,7 @@ button {
             id="logProgress"
             class="muted"
         >
-            ███████░░░░░░░░░░ 47%
+            █░░░░░░░░░░░░░░░░░ 1%
         </div>
 
     </div>
@@ -6048,14 +6048,28 @@ setInterval(
    DREAMCORELOST MEDIA ARCHIVE
 ========================================================= */
 
-const dreamcoreArchiveElement =
-    document.getElementById("archiveElement");
+(function () {
 
-if (dreamcoreArchiveElement) {
+    const archive =
+        document.getElementById(
+            "dreamcoreArchive"
+        );
 
-    const dreamcoreArchiveTexts = [
 
-        "DREAMCORELOST MEDIA ARCHIVE // 199X",
+    if (!archive) {
+
+        console.error(
+            "[DREAMCORE ARCHIVE] Element #dreamcoreArchive introuvable."
+        );
+
+        return;
+
+    }
+
+
+    const texts = [
+
+        "DREAMCORE",
 
         "THE ARCHIVE",
 
@@ -6066,8 +6080,6 @@ if (dreamcoreArchiveElement) {
         "ARE YOU LOST ?",
 
         "LOST MEDIA",
-
-        "DREAMCORE",
 
         "ARCHIVE_199X",
 
@@ -6085,45 +6097,55 @@ if (dreamcoreArchiveElement) {
 
         "YOU WERE NOT SUPPOSED TO FIND THIS",
 
-        ".... . .-.. .--. / -- .",
+        "ARE YOU STILL THERE ?",
 
-        "ARE YOU STILL THERE ?"
+        "WEIRDCORE"
 
     ];
 
 
-    let dreamcoreArchiveLastIndex = -1;
+    let lastIndex = 0;
 
 
-    function changeDreamcoreArchive() {
+    /*
+    =====================================================
+       ANIMATION
+    =====================================================
+    */
 
-        let newIndex;
+    archive.style.transition =
+        "opacity 0.45s ease, filter 0.45s ease, transform 0.45s ease";
+
+
+    /*
+    =====================================================
+       CHANGEMENT
+    =====================================================
+    */
+
+    function changeArchive() {
+
+        let index;
 
 
         do {
 
-            newIndex =
+            index =
                 Math.floor(
                     Math.random() *
-                    dreamcoreArchiveTexts.length
+                    texts.length
                 );
 
         }
 
         while (
-            newIndex ===
-            dreamcoreArchiveLastIndex
+            index ===
+            lastIndex
         );
 
 
-        dreamcoreArchiveLastIndex =
-            newIndex;
-
-
-        const newText =
-            dreamcoreArchiveTexts[
-                newIndex
-            ];
+        lastIndex =
+            index;
 
 
         /*
@@ -6132,15 +6154,27 @@ if (dreamcoreArchiveElement) {
         -------------------------------------------------
         */
 
-        dreamcoreArchiveElement.style.opacity =
+        archive.style.opacity =
             "0";
 
+        archive.style.filter =
+            "blur(4px)";
+
+        archive.style.transform =
+            "translateY(-3px)";
+
+
+        /*
+        -------------------------------------------------
+        CHANGER LE TEXTE
+        -------------------------------------------------
+        */
 
         setTimeout(
-            () => {
+            function () {
 
-                dreamcoreArchiveElement.textContent =
-                    newText;
+                archive.textContent =
+                    texts[index];
 
 
                 /*
@@ -6149,11 +6183,18 @@ if (dreamcoreArchiveElement) {
                 -----------------------------------------
                 */
 
-                dreamcoreArchiveElement.style.opacity =
+                archive.style.opacity =
                     "1";
 
+                archive.style.filter =
+                    "blur(0)";
+
+                archive.style.transform =
+                    "translateY(0)";
+
+
             },
-            500
+            450
         );
 
     }
@@ -6161,48 +6202,27 @@ if (dreamcoreArchiveElement) {
 
     /*
     =====================================================
-    TRANSITION
+       TIMER ALEATOIRE
+       8 → 10 SECONDES
     =====================================================
     */
 
-    dreamcoreArchiveElement.style.transition =
-        "opacity 0.5s ease";
-
-
-    /*
-    =====================================================
-    PREMIER TEXTE
-    =====================================================
-    */
-
-    dreamcoreArchiveElement.textContent =
-        dreamcoreArchiveTexts[0];
-
-
-    dreamcoreArchiveLastIndex =
-        0;
-
-
-    /*
-    =====================================================
-    CHANGEMENT ALÉATOIRE
-    ENTRE 8 ET 10 SECONDES
-    =====================================================
-    */
-
-    function scheduleDreamcoreArchive() {
+    function scheduleArchive() {
 
         const delay =
             8000 +
-            Math.random() * 2000;
+            Math.floor(
+                Math.random() *
+                2001
+            );
 
 
         setTimeout(
-            () => {
+            function () {
 
-                changeDreamcoreArchive();
+                changeArchive();
 
-                scheduleDreamcoreArchive();
+                scheduleArchive();
 
             },
             delay
@@ -6211,9 +6231,24 @@ if (dreamcoreArchiveElement) {
     }
 
 
-    scheduleDreamcoreArchive();
+    /*
+    =====================================================
+       DEMARRAGE
+    =====================================================
+    */
 
-}
+    archive.textContent =
+        "DREAMCORE";
+
+
+    scheduleArchive();
+
+
+    console.log(
+        "[DREAMCORE ARCHIVE] Random archive active."
+    );
+
+})();
 
 /* =========================================================
    INIT
