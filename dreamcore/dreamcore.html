@@ -2119,7 +2119,7 @@ button {
 
     <div class="logo">
 
-    <span id="dreamcoreArchiveText">
+    <span id="dreamcoreArchive">
         DREAMCORE
     </span>
 
@@ -6043,131 +6043,177 @@ setInterval(
     9000
 );
 
+
 /* =========================================================
-   DREAMCORE LOST MEDIA ARCHIVE
+   DREAMCORELOST MEDIA ARCHIVE
 ========================================================= */
 
-const archiveTexts = [
+const dreamcoreArchiveElement =
+    document.getElementById("archiveElement");
 
-    "DREAMCORELOST MEDIA ARCHIVE // 199X",
+if (dreamcoreArchiveElement) {
 
-    "DREAMCORE",
+    const dreamcoreArchiveTexts = [
 
-    "THE ARCHIVE",
+        "DREAMCORELOST MEDIA ARCHIVE // 199X",
 
-    "A24",
+        "THE ARCHIVE",
 
-    ".... . .-.. .--. / -- .",
+        "A24",
 
-    "HELP ME",
+        ".... . .-.. .--. / -- .",
 
-    "ARE YOU LOST ?",
+        "ARE YOU LOST ?",
 
-    "NO SIGNAL",
+        "LOST MEDIA",
 
-    "ARCHIVE // UNKNOWN",
+        "DREAMCORE",
 
-    "FILE NOT FOUND",
+        "ARCHIVE_199X",
 
-    "DO NOT LOOK BACK",
+        "SIGNAL LOST",
 
-    "WHERE ARE YOU ?",
+        "DO YOU REMEMBER ?",
 
-    "199X",
+        "NO MATCH FOUND",
 
-    "YOU WERE HERE",
+        "MEDIA UNKNOWN",
 
-    "THIS FILE DOES NOT EXIST",
+        "PAGE NOT FOUND",
 
-    "CAN YOU HEAR ME ?",
+        "SOMETHING IS HERE",
 
-    "LOST MEDIA",
+        "YOU WERE NOT SUPPOSED TO FIND THIS",
 
-    "UNKNOWN LOCATION",
+        ".... . .-.. .--. / -- .",
 
-    "END OF RECORD",
+        "ARE YOU STILL THERE ?"
 
-    "THE DOOR IS OPEN",
-
-    "WHO ARE YOU ?"
-
-];
+    ];
 
 
-const archiveElement =
-    document.getElementById(
-        "dreamcoreArchiveText"
-    );
+    let dreamcoreArchiveLastIndex = -1;
 
 
-let lastArchiveIndex = -1;
+    function changeDreamcoreArchive() {
+
+        let newIndex;
 
 
-function randomArchiveText() {
+        do {
 
-    if (!archiveElement) {
-        return;
+            newIndex =
+                Math.floor(
+                    Math.random() *
+                    dreamcoreArchiveTexts.length
+                );
+
+        }
+
+        while (
+            newIndex ===
+            dreamcoreArchiveLastIndex
+        );
+
+
+        dreamcoreArchiveLastIndex =
+            newIndex;
+
+
+        const newText =
+            dreamcoreArchiveTexts[
+                newIndex
+            ];
+
+
+        /*
+        -------------------------------------------------
+        FADE OUT
+        -------------------------------------------------
+        */
+
+        dreamcoreArchiveElement.style.opacity =
+            "0";
+
+
+        setTimeout(
+            () => {
+
+                dreamcoreArchiveElement.textContent =
+                    newText;
+
+
+                /*
+                -----------------------------------------
+                FADE IN
+                -----------------------------------------
+                */
+
+                dreamcoreArchiveElement.style.opacity =
+                    "1";
+
+            },
+            500
+        );
+
     }
 
 
-    let index;
+    /*
+    =====================================================
+    TRANSITION
+    =====================================================
+    */
+
+    dreamcoreArchiveElement.style.transition =
+        "opacity 0.5s ease";
 
 
-    do {
+    /*
+    =====================================================
+    PREMIER TEXTE
+    =====================================================
+    */
 
-        index =
-            Math.floor(
-                Math.random() *
-                archiveTexts.length
-            );
+    dreamcoreArchiveElement.textContent =
+        dreamcoreArchiveTexts[0];
+
+
+    dreamcoreArchiveLastIndex =
+        0;
+
+
+    /*
+    =====================================================
+    CHANGEMENT ALÉATOIRE
+    ENTRE 8 ET 10 SECONDES
+    =====================================================
+    */
+
+    function scheduleDreamcoreArchive() {
+
+        const delay =
+            8000 +
+            Math.random() * 2000;
+
+
+        setTimeout(
+            () => {
+
+                changeDreamcoreArchive();
+
+                scheduleDreamcoreArchive();
+
+            },
+            delay
+        );
 
     }
 
-    while (
-        index ===
-        lastArchiveIndex
-    );
 
+    scheduleDreamcoreArchive();
 
-    lastArchiveIndex =
-        index;
-
-
-    archiveElement.classList.add(
-        "archive-changing"
-    );
-
-
-    setTimeout(
-        () => {
-
-            archiveElement.textContent =
-                archiveTexts[index];
-
-            archiveElement.classList.remove(
-                "archive-changing"
-            );
-
-        },
-        350
-    );
-
-
-    const delay =
-        Math.floor(
-            Math.random() *
-            2001
-        ) + 8000;
-
-
-    setTimeout(
-        randomArchiveText,
-        delay
-    );
 }
-
-
-randomArchiveText();
 
 /* =========================================================
    INIT
