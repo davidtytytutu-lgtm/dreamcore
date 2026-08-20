@@ -1059,6 +1059,31 @@ header::after {
     }
 }
 
+/* =========================================================
+  logo DREAMCORE
+========================================================= */
+
+#dreamcoreArchiveText {
+
+    transition:
+        opacity 0.35s ease,
+        filter 0.35s ease,
+        transform 0.35s ease;
+
+}
+
+
+#dreamcoreArchiveText.archive-changing {
+
+    opacity: 0;
+
+    filter:
+        blur(4px);
+
+    transform:
+        translateY(-3px);
+
+}
 
 /* =========================================================
    CHAT
@@ -6016,6 +6041,131 @@ setInterval(
     9000
 );
 
+/* =========================================================
+   DREAMCORE LOST MEDIA ARCHIVE
+========================================================= */
+
+const archiveTexts = [
+
+    "DREAMCORELOST MEDIA ARCHIVE // 199X",
+
+    "DREAMCORE",
+
+    "THE ARCHIVE",
+
+    "A24",
+
+    ".... . .-.. .--. / -- .",
+
+    "HELP ME",
+
+    "ARE YOU LOST ?",
+
+    "NO SIGNAL",
+
+    "ARCHIVE // UNKNOWN",
+
+    "FILE NOT FOUND",
+
+    "DO NOT LOOK BACK",
+
+    "WHERE ARE YOU ?",
+
+    "199X",
+
+    "YOU WERE HERE",
+
+    "THIS FILE DOES NOT EXIST",
+
+    "CAN YOU HEAR ME ?",
+
+    "LOST MEDIA",
+
+    "UNKNOWN LOCATION",
+
+    "END OF RECORD",
+
+    "THE DOOR IS OPEN",
+
+    "WHO ARE YOU ?"
+
+];
+
+
+const archiveElement =
+    document.getElementById(
+        "dreamcoreArchiveText"
+    );
+
+
+let lastArchiveIndex = -1;
+
+
+function randomArchiveText() {
+
+    if (!archiveElement) {
+        return;
+    }
+
+
+    let index;
+
+
+    do {
+
+        index =
+            Math.floor(
+                Math.random() *
+                archiveTexts.length
+            );
+
+    }
+
+    while (
+        index ===
+        lastArchiveIndex
+    );
+
+
+    lastArchiveIndex =
+        index;
+
+
+    archiveElement.classList.add(
+        "archive-changing"
+    );
+
+
+    setTimeout(
+        () => {
+
+            archiveElement.textContent =
+                archiveTexts[index];
+
+            archiveElement.classList.remove(
+                "archive-changing"
+            );
+
+        },
+        350
+    );
+
+
+    const delay =
+        Math.floor(
+            Math.random() *
+            2001
+        ) + 8000;
+
+
+    setTimeout(
+        randomArchiveText,
+        delay
+    );
+}
+
+
+randomArchiveText();
 
 /* =========================================================
    INIT
