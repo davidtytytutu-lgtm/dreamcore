@@ -1662,22 +1662,7 @@ async function listMedia(
 =========================================================
 */
 
-
-
-const LIBRARY_PAGE_PREFIX =
-    "page";
-
-const LIBRARY_PAGE_EXTENSION =
-    ".txt";
-
-
-/*
-=========================================================
- LIBRARY — LIST
-=========================================================
-*/
-
-async function listLibraryPages() {
+async function listLibraryFiles() {
 
     console.log(
         "[LIBRARY] Reading GitHub directory: libraryofbabel"
@@ -1701,61 +1686,51 @@ async function listLibraryPages() {
             return [];
         }
 
-        const pages =
+        const files =
             data
 
                 .filter(
                     file =>
-                        file.type === "file" &&
-                        /^page\d+\.txt$/i.test(
-                            file.name
-                        )
+                        file.type === "file"
                 )
 
                 .map(
-                    file => {
+                    file => ({
 
-                        const match =
-                            file.name.match(
-                                /^page(\d+)\.txt$/i
-                            );
+                        name:
+                            file.name,
 
-                        return {
+                        path:
+                            file.path,
 
-                            name:
-                                file.name,
+                        size:
+                            file.size,
 
-                            page:
-                                parseInt(
-                                    match[1],
-                                    10
-                                ),
+                        url:
+                            file.download_url,
 
-                            path:
-                                file.path,
-
-                            size:
-                                file.size,
-
-                            url:
-                                file.download_url,
-
-                            github:
-                                file.html_url
-                        };
-                    }
+                        github:
+                            file.html_url
+                    })
                 )
 
                 .sort(
                     (a, b) =>
-                        a.page - b.page
+                        a.name.localeCompare(
+                            b.name,
+                            undefined,
+                            {
+                                numeric: true
+                            }
+                        )
                 );
 
         console.log(
-            `[LIBRARY] ${pages.length} page(s) found`
+            `[LIBRARY] ${files.length} file(s) found`
         );
 
-        return pages;
+        return files;
+
     }
 
     catch (error) {
@@ -1767,7 +1742,8 @@ async function listLibraryPages() {
         ) {
 
             console.error(
-                "[LIBRARY] Directory not found: libraryofbabel"
+                "[LIBRARY] Directory not found:",
+                LIBRARY_PATH
             );
 
             return [];
@@ -1780,33 +1756,38 @@ async function listLibraryPages() {
 
 /*
 =========================================================
- LIBRARY — GET PAGE
+ LIBRARY — READ FILE
 =========================================================
 */
 
-async function getLibraryPage(
-    pageNumber
+async function getLibraryFile(
+    filename
 ) {
 
-    const parsed =
-        parseInt(
-            pageNumber,
-            10
-        );
-
     if (
-        !Number.isFinite(parsed) ||
-        parsed < 1
+        !filename ||
+        typeof filename !== "string"
     ) {
-
         return null;
     }
 
-    const filename =
-        `${LIBRARY_PAGE_PREFIX}${String(parsed).padStart(3, "0")}${LIBRARY_PAGE_EXTENSION}`;
+    /*
+    Sécurité :
+    on autorise uniquement un nom de fichier,
+    pas un chemin arbitraire.
+    */
+
+    const cleanName =
+        path.basename(filename);
+
+    if (
+        cleanName !== filename
+    ) {
+        return null;
+    }
 
     const filePath =
-        `${LIBRARY_PATH}/${filename}`;
+        `${LIBRARY_PATH}/${cleanName}`;
 
     console.log(
         `[LIBRARY] Reading ${filePath}`
@@ -1820,7 +1801,7 @@ async function getLibraryPage(
     if (!file) {
 
         console.log(
-            `[LIBRARY] Page not found: ${filePath}`
+            `[LIBRARY] File not found: ${filePath}`
         );
 
         return null;
@@ -1828,11 +1809,8 @@ async function getLibraryPage(
 
     return {
 
-        page:
-            parsed,
-
         name:
-            filename,
+            cleanName,
 
         path:
             filePath,
@@ -1865,8 +1843,8 @@ async function libraryOfBabel(
 
     try {
 
-        const pages =
-            await listLibraryPages();
+        const files =
+            await listLibraryFiles();
 
         sendJSON(
             response,
@@ -1880,9 +1858,9 @@ async function libraryOfBabel(
                     LIBRARY_PATH,
 
                 count:
-                    pages.length,
+                    files.length,
 
-                pages
+                files
             }
         );
 
@@ -1913,24 +1891,24 @@ async function libraryOfBabel(
 
 /*
 =========================================================
- LIBRARY — API PAGE
+ LIBRARY — API FILE
 =========================================================
 */
 
-async function libraryOfBabelPage(
+async function libraryOfBabelFile(
     request,
     response,
-    pageNumber
+    filename
 ) {
 
     try {
 
-        const page =
-            await getLibraryPage(
-                pageNumber
+        const file =
+            await getLibraryFile(
+                filename
             );
 
-        if (!page) {
+        if (!file) {
 
             sendJSON(
                 response,
@@ -1938,10 +1916,10 @@ async function libraryOfBabelPage(
                 {
 
                     error:
-                        "PAGE_NOT_FOUND",
+                        "FILE_NOT_FOUND",
 
-                    page:
-                        Number(pageNumber)
+                    file:
+                        filename
                 }
             );
 
@@ -1956,7 +1934,7 @@ async function libraryOfBabelPage(
                 success:
                     true,
 
-                ...page
+                ...file
             }
         );
 
@@ -1965,7 +1943,7 @@ async function libraryOfBabelPage(
     catch (error) {
 
         console.error(
-            "[LIBRARY PAGE]",
+            "[LIBRARY FILE]",
             error
         );
 
@@ -1975,7 +1953,7 @@ async function libraryOfBabelPage(
             {
 
                 error:
-                    "LIBRARY_PAGE_FAILED",
+                    "LIBRARY_FILE_FAILED",
 
                 message:
                     error.message
@@ -1983,7 +1961,6 @@ async function libraryOfBabelPage(
         );
     }
 }
-
 
 /*
 =========================================================
@@ -3078,55 +3055,57 @@ async function handleRequest(
 
 
     /*
-    =====================================================
-    LIBRARY OF BABEL
-    =====================================================
-    */
+=====================================================
+ LIBRARY OF BABEL
+=====================================================
+*/
 
-    if (
-        url.pathname ===
-            "/api/libraryofbabel" &&
-        request.method ===
-            "GET"
-    ) {
+if (
+    url.pathname ===
+        "/api/libraryofbabel" &&
+    request.method ===
+        "GET"
+) {
 
-        await libraryOfBabel(
-            request,
-            response
-        );
+    await libraryOfBabel(
+        request,
+        response
+    );
 
-        return;
-    }
+    return;
+}
 
 
-    /*
-    =====================================================
-    LIBRARY OF BABEL PAGE
-    =====================================================
-    */
+/*
+=====================================================
+ LIBRARY OF BABEL FILE
+=====================================================
+*/
 
-    if (
-        url.pathname.startsWith(
-            "/api/libraryofbabel/page/"
-        ) &&
-        request.method ===
-            "GET"
-    ) {
+if (
+    url.pathname.startsWith(
+        "/api/libraryofbabel/file/"
+    ) &&
+    request.method ===
+        "GET"
+) {
 
-        const pageNumber =
+    const filename =
+        decodeURIComponent(
             url.pathname
-                .split("/")
-                .pop();
-
-        await libraryOfBabelPage(
-            request,
-            response,
-            pageNumber
+                .slice(
+                    "/api/libraryofbabel/file/".length
+                )
         );
 
-        return;
-    }
+    await libraryOfBabelFile(
+        request,
+        response,
+        filename
+    );
 
+    return;
+}
 
     /*
     =====================================================
