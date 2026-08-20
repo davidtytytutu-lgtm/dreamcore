@@ -3350,6 +3350,205 @@ function playSectionTransition() {
 }
 
 
+
+/* =========================================================
+   DREAMCORE URL SYSTEM
+   Change l'URL sans recharger la page
+========================================================= */
+
+(function () {
+
+    const basePath = "/dreamcore";
+
+    const routes = [
+        "lost",
+        "weirdcore",
+        "A24",
+        "are-you-dreaming",
+        "archive",
+        "lost-media",
+        "199X",
+        "signal-lost",
+        "memory",
+        "unknown"
+    ];
+
+    let lastRoute = null;
+
+
+    /* =====================================================
+       NORMALISATION DU CHEMIN
+    ===================================================== */
+
+    function isDreamcorePath() {
+
+        const path =
+            window.location.pathname.replace(
+                /\/+$/,
+                ""
+            );
+
+        return (
+            path === basePath ||
+            path.startsWith(
+                basePath + "/"
+            )
+        );
+
+    }
+
+
+    /* =====================================================
+       CHANGEMENT ALEATOIRE
+    ===================================================== */
+
+    function changeDreamcoreURL() {
+
+        let route;
+
+        do {
+
+            route =
+                routes[
+                    Math.floor(
+                        Math.random() *
+                        routes.length
+                    )
+                ];
+
+        } while (
+            routes.length > 1 &&
+            route === lastRoute
+        );
+
+
+        lastRoute =
+            route;
+
+
+        const newPath =
+            basePath +
+            "/" +
+            route;
+
+
+        history.replaceState(
+            null,
+            "",
+            newPath
+        );
+
+
+        console.log(
+            "[DREAMCORE URL]",
+            newPath
+        );
+
+    }
+
+
+    /* =====================================================
+       DETECTION D'UN RECHARGEMENT
+    ===================================================== */
+
+    const navigation =
+        performance.getEntriesByType(
+            "navigation"
+        )[0];
+
+
+    const isReload =
+        navigation &&
+        navigation.type === "reload";
+
+
+    /*
+    ---------------------------------------------------------
+    IMPORTANT
+
+    Si l'utilisateur recharge une URL comme :
+
+        /dreamcore/lost
+
+    on veut revenir à :
+
+        /dreamcore
+
+    ---------------------------------------------------------
+    */
+
+    if (
+        isReload &&
+        isDreamcorePath() &&
+        window.location.pathname !== basePath
+    ) {
+
+        history.replaceState(
+            null,
+            "",
+            basePath
+        );
+
+        console.log(
+            "[DREAMCORE URL] Reload detected -> /dreamcore"
+        );
+
+    }
+
+
+    /* =====================================================
+       DEMARRAGE
+    ===================================================== */
+
+    if (
+        window.location.pathname === basePath
+    ) {
+
+        lastRoute = null;
+
+    }
+
+
+    /*
+    ---------------------------------------------------------
+    PREMIER CHANGEMENT
+
+    On attend 8 secondes avant le premier changement.
+    ---------------------------------------------------------
+    */
+
+    function scheduleNextChange() {
+
+        const delay =
+            8000 +
+            Math.floor(
+                Math.random() * 2001
+            );
+
+
+        setTimeout(
+            function () {
+
+                changeDreamcoreURL();
+
+                scheduleNextChange();
+
+            },
+            delay
+        );
+
+    }
+
+
+    scheduleNextChange();
+
+
+    console.log(
+        "[DREAMCORE URL] System active."
+    );
+
+})();
+
 /* =========================================================
    NAVIGATION
 ========================================================= */
