@@ -10,12 +10,18 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>DREAMCORE // ARCHIVE</title>
+<title>DREAMCORE // LOST ARCHIVE</title>
+
+<link
+    rel="icon"
+    type="image/png"
+    href="https://raw.githubusercontent.com/davidtytytutu-lgtm/dreamcore/refs/heads/main/dreamcore/not-again.png"
+>
 
 <style>
 
 /* =========================================================
-   BASE
+   DREAMCORE // LOST MEDIA // WEIRDCORE
 ========================================================= */
 
 * {
@@ -26,7 +32,6 @@ html,
 body {
     margin: 0;
     padding: 0;
-
     width: 100%;
     height: 100%;
 }
@@ -35,19 +40,68 @@ body {
 
     background:
         radial-gradient(
-            circle at 50% 40%,
-            #343446 0%,
-            #181820 45%,
-            #08080d 100%
+            circle at 50% 35%,
+            #454052 0%,
+            #292633 28%,
+            #111119 68%,
+            #050507 100%
         );
 
-    color: #d8d8df;
+    color: #d8d4df;
 
     font-family:
         "Courier New",
         monospace;
 
     overflow: hidden;
+
+    cursor: default;
+}
+
+
+/* =========================================================
+   DREAMCORE ATMOSPHERE
+========================================================= */
+
+body::before {
+
+    content: "";
+
+    position: fixed;
+
+    inset: -20%;
+
+    pointer-events: none;
+
+    z-index: 9997;
+
+    background:
+        radial-gradient(
+            ellipse at 20% 20%,
+            rgba(170,150,190,0.08),
+            transparent 35%
+        ),
+        radial-gradient(
+            ellipse at 80% 70%,
+            rgba(100,120,180,0.07),
+            transparent 40%
+        );
+
+    animation:
+        atmosphere 12s ease-in-out infinite alternate;
+}
+
+@keyframes atmosphere {
+
+    from {
+        transform: scale(1) rotate(0deg);
+        opacity: 0.6;
+    }
+
+    to {
+        transform: scale(1.08) rotate(1deg);
+        opacity: 1;
+    }
 }
 
 
@@ -58,48 +112,38 @@ body {
 #bootScreen {
 
     position: fixed;
-
     inset: 0;
 
     z-index: 20000;
 
     display: flex;
-
     flex-direction: column;
 
     align-items: center;
-
     justify-content: center;
 
     background:
         radial-gradient(
             circle at center,
-            #343446 0%,
-            #181820 45%,
-            #08080d 100%
+            #403d4c 0%,
+            #1d1b25 45%,
+            #050507 100%
         );
 
     color: #d8d8df;
 
-    font-family:
-        "Courier New",
-        monospace;
-
     opacity: 1;
-
     visibility: visible;
 
     transition:
-        opacity 0.8s ease,
-        visibility 0.8s ease;
+        opacity 1s ease,
+        visibility 1s ease;
 }
 
 #bootScreen.hidden {
 
     opacity: 0;
-
     visibility: hidden;
-
     pointer-events: none;
 }
 
@@ -112,8 +156,9 @@ body {
     color: #eeeeef;
 
     text-shadow:
-        2px 0 #7777aa,
-        -2px 0 #aa7777;
+        3px 0 #7777aa,
+        -3px 0 #aa7777,
+        0 0 25px rgba(200,190,220,0.25);
 
     animation:
         bootLogo 1.2s infinite;
@@ -152,11 +197,9 @@ body {
     position: absolute;
 
     left: -100%;
-
     top: 0;
 
     width: 100%;
-
     height: 100%;
 
     background: #d8d8df;
@@ -176,18 +219,35 @@ body {
     color: #9999a5;
 }
 
+.boot-warning {
+
+    margin-top: 25px;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+
+    color: #676471;
+
+    animation:
+        warningBlink 2s infinite;
+}
+
 @keyframes bootLogo {
 
     0% {
-        opacity: 0.65;
+        opacity: 0.55;
+        transform: translateX(0);
     }
 
     50% {
         opacity: 1;
+        transform: translateX(1px);
     }
 
     100% {
-        opacity: 0.65;
+        opacity: 0.55;
+        transform: translateX(-1px);
     }
 }
 
@@ -202,6 +262,20 @@ body {
     }
 }
 
+@keyframes warningBlink {
+
+    0%,
+    70%,
+    100% {
+        opacity: 0.25;
+    }
+
+    75%,
+    85% {
+        opacity: 1;
+    }
+}
+
 
 /* =========================================================
    CRT
@@ -210,7 +284,6 @@ body {
 #crt {
 
     position: fixed;
-
     inset: 0;
 
     pointer-events: none;
@@ -236,14 +309,13 @@ body {
     content: "";
 
     position: absolute;
-
     inset: 0;
 
     background:
         radial-gradient(
             ellipse at center,
-            transparent 50%,
-            rgba(0,0,0,0.55) 100%
+            transparent 48%,
+            rgba(0,0,0,0.6) 100%
         );
 }
 
@@ -252,7 +324,6 @@ body {
     content: "";
 
     position: absolute;
-
     inset: 0;
 
     box-shadow:
@@ -265,7 +336,7 @@ body {
 @keyframes crtFlicker {
 
     0% {
-        opacity: 0.96;
+        opacity: 0.94;
     }
 
     50% {
@@ -273,7 +344,153 @@ body {
     }
 
     100% {
-        opacity: 0.97;
+        opacity: 0.96;
+    }
+}
+
+
+/* =========================================================
+   SECTION TRANSITION
+========================================================= */
+
+#sectionTransition {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 15000;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    background:
+        rgba(8,8,13,0.35);
+
+    overflow: hidden;
+}
+
+#sectionTransition.active {
+
+    animation:
+        sectionGlitch 0.42s steps(2, end);
+}
+
+#sectionTransition::before,
+#sectionTransition::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    opacity: 0;
+}
+
+#sectionTransition::before {
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0px,
+            transparent 3px,
+            rgba(255,80,100,0.18) 4px,
+            transparent 6px
+        );
+}
+
+#sectionTransition::after {
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(120,120,255,0.13),
+            transparent 30%,
+            transparent 70%,
+            rgba(255,100,100,0.13)
+        );
+}
+
+#sectionTransition.active::before {
+
+    animation:
+        transitionScan 0.42s steps(4);
+}
+
+#sectionTransition.active::after {
+
+    animation:
+        transitionRGB 0.42s steps(3);
+}
+
+@keyframes sectionGlitch {
+
+    0% {
+        opacity: 0;
+        transform: translate(0);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translate(-3px, 0);
+    }
+
+    20% {
+        transform: translate(4px, 1px);
+    }
+
+    35% {
+        opacity: 0.8;
+        transform: translate(-2px, -1px);
+    }
+
+    55% {
+        transform: translate(3px, 0);
+    }
+
+    75% {
+        opacity: 0.4;
+        transform: translate(0);
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes transitionScan {
+
+    0% {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+
+    30% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+}
+
+@keyframes transitionRGB {
+
+    0% {
+        opacity: 0;
+        transform: translateX(-15px);
+    }
+
+    40% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(15px);
     }
 }
 
@@ -288,14 +505,13 @@ body {
     height: 100%;
 
     display: flex;
-
     flex-direction: column;
 
     padding: 14px;
 
     filter:
         contrast(1.05)
-        saturate(0.85);
+        saturate(0.8);
 }
 
 
@@ -316,7 +532,6 @@ header {
     display: flex;
 
     align-items: center;
-
     justify-content: space-between;
 
     padding:
@@ -324,6 +539,42 @@ header {
 
     box-shadow:
         0 0 20px rgba(0,0,0,0.5);
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+header::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: -100%;
+
+    bottom: 0;
+
+    width: 60%;
+
+    height: 1px;
+
+    background:
+        #aaa4bd;
+
+    animation:
+        headerScan 8s linear infinite;
+}
+
+@keyframes headerScan {
+
+    from {
+        left: -60%;
+    }
+
+    to {
+        left: 160%;
+    }
 }
 
 .logo {
@@ -337,6 +588,9 @@ header {
     text-shadow:
         2px 0 #7777aa,
         -2px 0 #aa7777;
+
+    animation:
+        logoDrift 6s ease-in-out infinite;
 }
 
 .logo small {
@@ -348,6 +602,18 @@ header {
     letter-spacing: 2px;
 
     color: #777783;
+}
+
+@keyframes logoDrift {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(1px);
+    }
 }
 
 .status {
@@ -364,7 +630,6 @@ header {
 .status-dot {
 
     width: 9px;
-
     height: 9px;
 
     border-radius: 50%;
@@ -373,6 +638,9 @@ header {
 
     box-shadow:
         0 0 8px currentColor;
+
+    transition:
+        background 0.3s;
 }
 
 .status-dot.online {
@@ -426,6 +694,8 @@ header {
         0 0 10px rgba(0,0,0,0.3);
 
     min-height: 0;
+
+    position: relative;
 }
 
 
@@ -472,6 +742,44 @@ header {
     text-align: left;
 
     cursor: pointer;
+
+    position: relative;
+
+    overflow: hidden;
+
+    transition:
+        background 0.15s,
+        transform 0.15s,
+        border-color 0.15s;
+}
+
+.nav-button::after {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: -120%;
+
+    width: 100%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,0.09),
+            transparent
+        );
+
+    transition:
+        left 0.35s;
+}
+
+.nav-button:hover::after {
+
+    left: 120%;
 }
 
 .nav-button:hover {
@@ -481,6 +789,9 @@ header {
 
     color:
         white;
+
+    transform:
+        translateX(2px);
 }
 
 .nav-button.active {
@@ -493,6 +804,24 @@ header {
 
     border-color:
         #9696a8;
+
+    animation:
+        navActive 0.35s ease;
+}
+
+@keyframes navActive {
+
+    0% {
+        transform:
+            translateX(-5px);
+        opacity: 0.4;
+    }
+
+    100% {
+        transform:
+            translateX(0);
+        opacity: 1;
+    }
 }
 
 .nav-separator {
@@ -533,6 +862,52 @@ header {
 .page.active {
 
     display: block;
+
+    animation:
+        pageEnter 0.38s ease;
+}
+
+@keyframes pageEnter {
+
+    0% {
+
+        opacity: 0;
+
+        transform:
+            translateY(5px)
+            scale(0.995);
+
+        filter:
+            blur(3px)
+            contrast(1.4);
+    }
+
+    40% {
+
+        opacity: 0.7;
+
+        transform:
+            translateX(-2px);
+    }
+
+    70% {
+
+        transform:
+            translateX(1px);
+    }
+
+    100% {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+        filter:
+            blur(0)
+            contrast(1);
+    }
 }
 
 .page-title {
@@ -542,6 +917,10 @@ header {
     letter-spacing: 4px;
 
     margin-bottom: 6px;
+
+    text-shadow:
+        2px 0 rgba(120,120,180,0.35),
+        -2px 0 rgba(180,120,120,0.25);
 }
 
 .page-subtitle {
@@ -569,6 +948,29 @@ header {
         rgba(40,40,50,0.5);
 
     margin-bottom: 15px;
+
+    position: relative;
+}
+
+.warning::before {
+
+    content:
+        "ARCHIVE_FRAGMENT";
+
+    position: absolute;
+
+    top: -7px;
+    right: 12px;
+
+    padding: 0 5px;
+
+    background:
+        #181820;
+
+    font-size: 8px;
+
+    color:
+        #656572;
 }
 
 .warning-title {
@@ -600,6 +1002,61 @@ header {
     bottom: 20px;
 
     pointer-events: none;
+
+    animation:
+        lostFloat 8s ease-in-out infinite;
+}
+
+@keyframes lostFloat {
+
+    0%,
+    100% {
+        transform:
+            translate(0,0)
+            rotate(0deg);
+    }
+
+    50% {
+        transform:
+            translate(-10px,-5px)
+            rotate(1deg);
+    }
+}
+
+.memory-fragment {
+
+    margin-top: 25px;
+
+    padding: 15px;
+
+    border-left:
+        2px solid #555566;
+
+    color: #777783;
+
+    font-size: 11px;
+
+    line-height: 1.8;
+
+    animation:
+        fragmentFlicker 7s infinite;
+}
+
+@keyframes fragmentFlicker {
+
+    0%,
+    90%,
+    100% {
+        opacity: 0.7;
+    }
+
+    92% {
+        opacity: 0.2;
+    }
+
+    94% {
+        opacity: 0.9;
+    }
 }
 
 
@@ -649,23 +1106,40 @@ header {
     border-left:
         2px solid #555566;
 
-    padding-left: 10px;
+    padding-left: 4px;
+
+    animation:
+        messageAppear 0.3s ease;
+}
+
+@keyframes messageAppear {
+
+    from {
+        opacity: 0;
+        transform:
+            translateX(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateX(0);
+    }
 }
 
 .message-content {
-
     display: flex;
-
-    gap: 10px;
+    align-items: flex-start;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .message-avatar {
-
     width: 42px;
-
     height: 42px;
 
-    flex-shrink: 0;
+    flex: 0 0 42px;
 
     object-fit: cover;
 
@@ -677,10 +1151,9 @@ header {
 }
 
 .message-data {
-
     min-width: 0;
-
-    flex: 1;
+    flex: 0 1 auto;
+    max-width: calc(100% - 48px);
 }
 
 .message-head {
@@ -749,6 +1222,11 @@ header {
     outline: none;
 }
 
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
 button {
 
     font-family:
@@ -771,12 +1249,27 @@ button {
 
     cursor:
         pointer;
+
+    transition:
+        all 0.15s;
 }
 
 .action-button:hover {
 
     background:
         #3b3b48;
+
+    border-color:
+        #9999aa;
+
+    transform:
+        translateY(-1px);
+}
+
+.action-button:active {
+
+    transform:
+        translateY(1px);
 }
 
 
@@ -810,6 +1303,15 @@ button {
         inherit;
 
     outline: none;
+}
+
+.input:focus {
+
+    border-color:
+        #9696a8;
+
+    box-shadow:
+        0 0 12px rgba(140,140,180,0.1);
 }
 
 .form-row {
@@ -879,6 +1381,24 @@ button {
     padding: 8px;
 
     overflow: hidden;
+
+    transition:
+        transform 0.2s,
+        border-color 0.2s,
+        background 0.2s;
+}
+
+.media-card:hover {
+
+    transform:
+        translateY(-2px)
+        rotate(0.2deg);
+
+    border-color:
+        #88889a;
+
+    background:
+        #1c1c26;
 }
 
 .media-card img {
@@ -892,6 +1412,10 @@ button {
     display: block;
 
     cursor: pointer;
+
+    filter:
+        grayscale(0.15)
+        contrast(1.05);
 }
 
 .media-card video {
@@ -937,12 +1461,18 @@ button {
         #15151d;
 
     cursor: pointer;
+
+    transition:
+        all 0.2s;
 }
 
 .archive-item:hover {
 
     background:
         #23232d;
+
+    transform:
+        translateX(3px);
 }
 
 .archive-size {
@@ -978,6 +1508,321 @@ button {
     font-size: 12px;
 
     white-space: pre;
+}
+
+
+/* =========================================================
+   LIBRARY OF BABEL
+========================================================= */
+
+.library-layout {
+
+    display: grid;
+
+    grid-template-columns:
+        210px
+        1fr;
+
+    gap: 12px;
+
+    min-height: 0;
+
+    height: calc(100% - 75px);
+}
+
+.library-sidebar {
+
+    border:
+        1px solid #50505e;
+
+    background:
+        rgba(10,10,16,0.75);
+
+    padding: 12px;
+
+    overflow-y: auto;
+}
+
+.library-sidebar-title {
+
+    font-size: 10px;
+
+    color: #777783;
+
+    margin-bottom: 12px;
+}
+
+.library-page-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+.library-page-button {
+
+    width: 100%;
+
+    padding: 8px;
+
+    text-align: left;
+
+    background:
+        #171720;
+
+    border:
+        1px solid #3e3e4a;
+
+    color:
+        #92929e;
+
+    font-family:
+        inherit;
+
+    cursor:
+        pointer;
+
+    font-size: 10px;
+
+    transition:
+        all 0.15s;
+}
+
+.library-page-button:hover {
+
+    background:
+        #292934;
+
+    color:
+        white;
+
+    transform:
+        translateX(2px);
+}
+
+.library-page-button.active {
+
+    border-color:
+        #888899;
+
+    color:
+        white;
+
+    background:
+        #30303b;
+}
+
+.library-reader {
+
+    min-width: 0;
+
+    min-height: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    border:
+        1px solid #50505e;
+
+    background:
+        rgba(9,9,14,0.9);
+}
+
+.library-reader-header {
+
+    min-height: 48px;
+
+    padding:
+        10px 13px;
+
+    border-bottom:
+        1px solid #444450;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+}
+
+.library-location {
+
+    font-size: 10px;
+
+    color: #777783;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.library-controls {
+
+    display: flex;
+
+    gap: 5px;
+
+    flex-shrink: 0;
+}
+
+.library-control {
+
+    padding:
+        5px 9px;
+
+    background:
+        #20202a;
+
+    border:
+        1px solid #505060;
+
+    color:
+        #aaaab5;
+
+    font-family:
+        inherit;
+
+    cursor:
+        pointer;
+
+    font-size: 10px;
+}
+
+.library-control:hover {
+
+    color: white;
+
+    background:
+        #30303b;
+}
+
+#libraryContent {
+
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 22px;
+
+    white-space: pre-wrap;
+
+    word-break: break-word;
+
+    font-size: 12px;
+
+    line-height: 1.8;
+
+    color:
+        #bdbac5;
+
+    text-shadow:
+        0 0 4px rgba(190,180,220,0.08);
+}
+
+#libraryContent.loading {
+
+    color:
+        #666672;
+
+    animation:
+        libraryLoading 0.8s infinite alternate;
+}
+
+@keyframes libraryLoading {
+
+    from {
+        opacity: 0.35;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.library-footer {
+
+    border-top:
+        1px solid #444450;
+
+    padding:
+        8px 13px;
+
+    font-size: 9px;
+
+    color:
+        #5e5e69;
+
+    display: flex;
+
+    justify-content: space-between;
+}
+
+.library-search {
+
+    width: 100%;
+
+    padding:
+        8px;
+
+    margin-bottom: 8px;
+
+    background:
+        #111119;
+
+    border:
+        1px solid #444450;
+
+    color:
+        #dddde5;
+
+    font-family:
+        inherit;
+
+    font-size: 10px;
+
+    outline: none;
+}
+
+.library-search:focus {
+
+    border-color:
+        #777788;
+}
+
+.babel-glitch {
+
+    animation:
+        babelGlitch 0.3s steps(2);
+}
+
+@keyframes babelGlitch {
+
+    0% {
+        opacity: 0.2;
+        transform: translateX(-4px);
+    }
+
+    35% {
+        opacity: 0.8;
+        transform: translateX(3px);
+    }
+
+    70% {
+        opacity: 0.5;
+        transform: translateX(-1px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 
@@ -1060,6 +1905,24 @@ button {
 
     box-shadow:
         0 0 20px rgba(0,0,0,0.6);
+
+    animation:
+        toastIn 0.25s ease;
+}
+
+@keyframes toastIn {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0);
+    }
 }
 
 
@@ -1079,6 +1942,13 @@ button {
     #side {
 
         display: none;
+    }
+
+    .library-layout {
+
+        grid-template-columns:
+            170px
+            1fr;
     }
 }
 
@@ -1144,6 +2014,25 @@ button {
 
         width: 210px;
     }
+
+    .library-layout {
+
+        grid-template-columns:
+            1fr;
+
+        height: auto;
+    }
+
+    .library-sidebar {
+
+        max-height: 150px;
+    }
+
+    .library-reader {
+
+        min-height: 450px;
+    }
+
 }
 
 </style>
@@ -1165,7 +2054,7 @@ button {
     </div>
 
     <div class="boot-subtitle">
-        ARCHIVE NETWORK // 199X
+        LOST MEDIA ARCHIVE // 199X
     </div>
 
     <div class="boot-line"></div>
@@ -1177,7 +2066,18 @@ button {
         INITIALIZING ARCHIVE...
     </div>
 
+    <div class="boot-warning">
+        SOME MEMORIES WERE NOT FOUND
+    </div>
+
 </div>
+
+
+<!-- =========================================================
+     SECTION TRANSITION
+========================================================= -->
+
+<div id="sectionTransition"></div>
 
 
 <!-- =========================================================
@@ -1201,7 +2101,7 @@ button {
         DREAMCORE
 
         <small>
-            ARCHIVE NETWORK // 199X
+            LOST MEDIA ARCHIVE // 199X
         </small>
 
     </div>
@@ -1236,7 +2136,7 @@ button {
 >
 
     <div class="nav-title">
-        NAVIGATION
+        NAVIGATION // MEMORY
     </div>
 
 
@@ -1288,6 +2188,14 @@ button {
     </button>
 
 
+    <button
+        class="nav-button"
+        data-page="library"
+    >
+        &gt; LIBRARY OF BABEL
+    </button>
+
+
     <div class="nav-separator"></div>
 
 
@@ -1319,7 +2227,9 @@ button {
 >
 
 
-<!-- HOME -->
+<!-- =====================================================
+     HOME
+====================================================== -->
 
 <section
     id="home"
@@ -1331,7 +2241,7 @@ button {
     </div>
 
     <div class="page-subtitle">
-        WELCOME TO THE ARCHIVE
+        WELCOME BACK TO A PLACE THAT MAY NOT EXIST
     </div>
 
 
@@ -1349,6 +2259,7 @@ button {
 
         <div class="muted">
             Some files may no longer exist.
+            Some memories may not belong to you.
         </div>
 
     </div>
@@ -1367,6 +2278,31 @@ button {
     </div>
 
 
+    <div class="memory-fragment">
+
+        [ RECOVERED MEMORY #0047 ]
+
+        <br>
+
+        I remember a hallway.
+
+        <br>
+
+        There was a window at the end.
+
+        <br>
+
+        I don't remember being there.
+
+        <br>
+
+        <span class="muted">
+            — FILE PARTIALLY CORRUPTED —
+        </span>
+
+    </div>
+
+
     <div class="big-text">
         LOST
     </div>
@@ -1374,7 +2310,9 @@ button {
 </section>
 
 
-<!-- CHAT -->
+<!-- =====================================================
+     CHAT
+====================================================== -->
 
 <section
     id="chatPage"
@@ -1418,7 +2356,9 @@ button {
 </section>
 
 
-<!-- ARCHIVE -->
+<!-- =====================================================
+     ARCHIVE
+====================================================== -->
 
 <section
     id="archive"
@@ -1440,7 +2380,9 @@ button {
 </section>
 
 
-<!-- PICTURES -->
+<!-- =====================================================
+     PICTURES
+====================================================== -->
 
 <section
     id="picture"
@@ -1452,7 +2394,7 @@ button {
     </div>
 
     <div class="page-subtitle">
-        IMAGE ARCHIVE
+        IMAGE ARCHIVE // UNKNOWN ORIGIN
     </div>
 
     <div
@@ -1463,7 +2405,9 @@ button {
 </section>
 
 
-<!-- MUSIC -->
+<!-- =====================================================
+     MUSIC
+====================================================== -->
 
 <section
     id="music"
@@ -1475,7 +2419,7 @@ button {
     </div>
 
     <div class="page-subtitle">
-        AUDIO ARCHIVE
+        AUDIO ARCHIVE // UNKNOWN RECORDINGS
     </div>
 
     <div
@@ -1486,7 +2430,9 @@ button {
 </section>
 
 
-<!-- VIDEO -->
+<!-- =====================================================
+     VIDEO
+====================================================== -->
 
 <section
     id="video"
@@ -1498,7 +2444,7 @@ button {
     </div>
 
     <div class="page-subtitle">
-        VIDEO ARCHIVE
+        VIDEO ARCHIVE // LOST FOOTAGE
     </div>
 
     <div
@@ -1509,7 +2455,129 @@ button {
 </section>
 
 
-<!-- UPLOAD -->
+<!-- =====================================================
+     LIBRARY OF BABEL
+====================================================== -->
+
+<section
+    id="library"
+    class="page"
+>
+
+    <div class="page-title">
+        LIBRARY OF BABEL
+    </div>
+
+    <div class="page-subtitle">
+        AN INFINITE LIBRARY THAT WAS NEVER SUPPOSED TO BE FOUND
+    </div>
+
+
+    <div class="library-layout">
+
+
+        <div class="library-sidebar">
+
+            <div class="library-sidebar-title">
+                ARCHIVED PAGES
+            </div>
+
+
+            <input
+                id="librarySearch"
+                class="library-search"
+                placeholder="SEARCH PAGE..."
+                autocomplete="off"
+            >
+
+
+            <div
+                id="libraryPageList"
+                class="library-page-list"
+            >
+
+                Loading archive...
+
+            </div>
+
+        </div>
+
+
+        <div class="library-reader">
+
+
+            <div class="library-reader-header">
+
+                <div
+                    id="libraryLocation"
+                    class="library-location"
+                >
+                    BABEL://UNKNOWN
+                </div>
+
+
+                <div class="library-controls">
+
+                    <button
+                        id="libraryRandom"
+                        class="library-control"
+                    >
+                        RANDOM
+                    </button>
+
+
+                    <button
+                        id="libraryPrevious"
+                        class="library-control"
+                    >
+                        &lt;
+                    </button>
+
+
+                    <button
+                        id="libraryNext"
+                        class="library-control"
+                    >
+                        &gt;
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="libraryContent"
+                class="loading"
+            >
+
+                CONNECTING TO LIBRARY...
+
+            </div>
+
+
+            <div class="library-footer">
+
+                <span id="libraryPageInfo">
+                    PAGE UNKNOWN
+                </span>
+
+                <span>
+                    DREAMCORE BABEL NODE
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     UPLOAD
+====================================================== -->
 
 <section
     id="upload"
@@ -1521,7 +2589,7 @@ button {
     </div>
 
     <div class="page-subtitle">
-        ADD FILE TO THE ARCHIVE
+        ADD FILE TO THE LOST ARCHIVE
     </div>
 
 
@@ -1529,7 +2597,9 @@ button {
         id="uploadLoginWarning"
         class="warning"
     >
+
         You must be logged in to upload files.
+
     </div>
 
 
@@ -1560,7 +2630,9 @@ button {
 </section>
 
 
-<!-- ACCOUNT -->
+<!-- =====================================================
+     ACCOUNT
+====================================================== -->
 
 <section
     id="account"
@@ -1766,6 +2838,34 @@ button {
     <div class="info-box">
 
         <div class="side-title">
+            BABEL NODE
+        </div>
+
+
+        <div class="muted">
+
+            LIBRARY
+
+            <br>
+
+            /api/libraryofbabel
+
+            <br><br>
+
+            SOURCE
+
+            <br>
+
+            GITHUB // PAGE.TXT
+
+        </div>
+
+    </div>
+
+
+    <div class="info-box">
+
+        <div class="side-title">
             CONNECTION
         </div>
 
@@ -1837,6 +2937,20 @@ let manuallyClosedSocket =
 
 
 /* =========================================================
+   LIBRARY OF BABEL STATE
+========================================================= */
+
+let libraryPages =
+    [];
+
+let currentLibraryIndex =
+    -1;
+
+let filteredLibraryPages =
+    [];
+
+
+/* =========================================================
    BOOT
 ========================================================= */
 
@@ -1865,7 +2979,9 @@ let manuallyClosedSocket =
 
         "CHECKING STORAGE...",
 
-        "CONNECTING ARCHIVE...",
+        "SEARCHING LOST MEDIA...",
+
+        "CONNECTING BABEL NODE...",
 
         "RESTORING DATA...",
 
@@ -1913,7 +3029,7 @@ let manuallyClosedSocket =
                         boot.style.display =
                             "none";
 
-                    }, 850);
+                    }, 1050);
 
                 }, 350);
 
@@ -1930,14 +3046,8 @@ let manuallyClosedSocket =
 
             }
 
-        }, 500);
+        }, 420);
 
-
-    /*
-     * SÉCURITÉ :
-     * même si quelque chose se passe mal,
-     * le boot ne peut pas rester bloqué.
-     */
 
     setTimeout(() => {
 
@@ -1959,7 +3069,7 @@ let manuallyClosedSocket =
                 boot.style.display =
                     "none";
 
-            }, 850);
+            }, 1050);
 
         }
 
@@ -2177,6 +3287,47 @@ function setServerOnline(
 
 
 /* =========================================================
+   SECTION TRANSITION
+========================================================= */
+
+function playSectionTransition() {
+
+    const transition =
+        document.getElementById(
+            "sectionTransition"
+        );
+
+
+    if (!transition) {
+        return;
+    }
+
+
+    transition.classList.remove(
+        "active"
+    );
+
+
+    void transition.offsetWidth;
+
+
+    transition.classList.add(
+        "active"
+    );
+
+
+    setTimeout(() => {
+
+        transition.classList.remove(
+            "active"
+        );
+
+    }, 500);
+
+}
+
+
+/* =========================================================
    NAVIGATION
 ========================================================= */
 
@@ -2193,6 +3344,9 @@ document
 
                     const page =
                         button.dataset.page;
+
+
+                    playSectionTransition();
 
 
                     document
@@ -2271,6 +3425,16 @@ document
                     ) {
 
                         loadMedia();
+
+                    }
+
+
+                    if (
+                        page ===
+                        "library"
+                    ) {
+
+                        loadLibrary();
 
                     }
 
@@ -2840,12 +4004,6 @@ function connectWebSocket() {
                     JSON.parse(
                         event.data
                     );
-
-
-                console.log(
-                    "[WS]",
-                    data
-                );
 
 
                 if (
@@ -3875,6 +5033,660 @@ function renderVideos(
 
 
 /* =========================================================
+   LIBRARY OF BABEL
+========================================================= */
+
+/*
+ * Le serveur doit fournir :
+ *
+ * GET /api/libraryofbabel
+ *
+ * Exemple de réponse :
+ *
+ * {
+ *   "pages": [
+ *      {
+ *          "name": "page1.txt",
+ *          "url": "https://..."
+ *      }
+ *   ]
+ * }
+ *
+ * Le client ne lit donc jamais directement le dépôt GitHub.
+ */
+
+async function loadLibrary() {
+
+    const list =
+        document.getElementById(
+            "libraryPageList"
+        );
+
+
+    if (
+        libraryPages.length
+    ) {
+
+        renderLibraryPageList();
+
+        return;
+
+    }
+
+
+    list.textContent =
+        "CONNECTING TO BABEL NODE...";
+
+
+    try {
+
+        const data =
+            await api(
+                "/api/libraryofbabel"
+            );
+
+
+        if (
+            Array.isArray(
+                data.pages
+            )
+        ) {
+
+            libraryPages =
+                data.pages;
+
+        }
+
+        else if (
+            Array.isArray(
+                data
+            )
+        ) {
+
+            libraryPages =
+                data;
+
+        }
+
+        else {
+
+            libraryPages =
+                [];
+
+        }
+
+
+        filteredLibraryPages =
+            [...libraryPages];
+
+
+        renderLibraryPageList();
+
+
+        if (
+            libraryPages.length
+        ) {
+
+            loadLibraryPage(
+                0
+            );
+
+        }
+
+        else {
+
+            document
+                .getElementById(
+                    "libraryContent"
+                )
+                .textContent =
+                "THE LIBRARY IS EMPTY.";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "BABEL ERROR:",
+            error
+        );
+
+
+        list.textContent =
+            "BABEL NODE OFFLINE";
+
+
+        document
+            .getElementById(
+                "libraryContent"
+            )
+            .classList.remove(
+                "loading"
+            );
+
+
+        document
+            .getElementById(
+                "libraryContent"
+            )
+            .textContent =
+            "COULD NOT CONNECT TO /api/libraryofbabel";
+
+    }
+
+}
+
+
+/* =========================================================
+   LIBRARY PAGE LIST
+========================================================= */
+
+function renderLibraryPageList() {
+
+    const list =
+        document.getElementById(
+            "libraryPageList"
+        );
+
+
+    list.innerHTML =
+        "";
+
+
+    if (
+        !filteredLibraryPages.length
+    ) {
+
+        list.textContent =
+            "NO MATCHING PAGES.";
+
+        return;
+
+    }
+
+
+    filteredLibraryPages.forEach(
+        (page, index) => {
+
+            const realIndex =
+                libraryPages.indexOf(
+                    page
+                );
+
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.className =
+                "library-page-button";
+
+
+            if (
+                realIndex ===
+                currentLibraryIndex
+            ) {
+
+                button.classList.add(
+                    "active"
+                );
+
+            }
+
+
+            button.textContent =
+                page.name ||
+                `PAGE ${realIndex + 1}`;
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    loadLibraryPage(
+                        realIndex
+                    );
+
+                }
+            );
+
+
+            list.appendChild(
+                button
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   LOAD LIBRARY PAGE
+========================================================= */
+
+async function loadLibraryPage(
+    index
+) {
+
+    if (
+        index < 0 ||
+        index >=
+            libraryPages.length
+    ) {
+
+        return;
+
+    }
+
+
+    const page =
+        libraryPages[index];
+
+
+    currentLibraryIndex =
+        index;
+
+
+    const content =
+        document.getElementById(
+            "libraryContent"
+        );
+
+
+    const location =
+        document.getElementById(
+            "libraryLocation"
+        );
+
+
+    const info =
+        document.getElementById(
+            "libraryPageInfo"
+        );
+
+
+    content.classList.add(
+        "loading"
+    );
+
+
+    content.classList.remove(
+        "babel-glitch"
+    );
+
+
+    void content.offsetWidth;
+
+
+    content.classList.add(
+        "babel-glitch"
+    );
+
+
+    location.textContent =
+        `BABEL://${page.name || "UNKNOWN"}`;
+
+
+    info.textContent =
+        `PAGE ${
+            index + 1
+        } / ${
+            libraryPages.length
+        }`;
+
+
+    try {
+
+        let url =
+            page.url;
+
+
+        /*
+         * Le serveur peut aussi envoyer :
+         *
+         * {
+         *   name: "page1.txt"
+         * }
+         *
+         * Dans ce cas le client demande :
+         *
+         * /api/libraryofbabel/page1.txt
+         */
+
+        if (!url) {
+
+            url =
+                API +
+                "/api/libraryofbabel/" +
+                encodeURIComponent(
+                    page.name
+                );
+
+        }
+
+
+        let response;
+
+
+        /*
+         * Si l'URL est déjà absolue,
+         * on la demande directement.
+         */
+
+        response =
+            await fetch(
+                url
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+
+        }
+
+
+        const text =
+            await response.text();
+
+
+        content.classList.remove(
+            "loading"
+        );
+
+
+        content.textContent =
+            text ||
+            "[ EMPTY PAGE ]";
+
+
+        renderLibraryPageList();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "BABEL PAGE ERROR:",
+            error
+        );
+
+
+        content.classList.remove(
+            "loading"
+        );
+
+
+        content.textContent =
+            "[ PAGE CORRUPTED OR MISSING ]";
+
+
+        renderLibraryPageList();
+
+    }
+
+}
+
+
+/* =========================================================
+   RANDOM BABEL PAGE
+========================================================= */
+
+function randomLibraryPage() {
+
+    if (
+        !libraryPages.length
+    ) {
+
+        return;
+
+    }
+
+
+    let index =
+        Math.floor(
+            Math.random() *
+            libraryPages.length
+        );
+
+
+    if (
+        libraryPages.length > 1 &&
+        index ===
+            currentLibraryIndex
+    ) {
+
+        index =
+            (
+                index + 1
+            ) %
+            libraryPages.length;
+
+    }
+
+
+    loadLibraryPage(
+        index
+    );
+
+}
+
+
+/* =========================================================
+   BABEL CONTROLS
+========================================================= */
+
+document
+    .getElementById(
+        "libraryRandom"
+    )
+    .addEventListener(
+        "click",
+        randomLibraryPage
+    );
+
+
+document
+    .getElementById(
+        "libraryPrevious"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            if (
+                !libraryPages.length
+            ) {
+
+                return;
+
+            }
+
+
+            const index =
+                (
+                    currentLibraryIndex -
+                    1 +
+                    libraryPages.length
+                ) %
+                libraryPages.length;
+
+
+            loadLibraryPage(
+                index
+            );
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "libraryNext"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            if (
+                !libraryPages.length
+            ) {
+
+                return;
+
+            }
+
+
+            const index =
+                (
+                    currentLibraryIndex +
+                    1
+                ) %
+                libraryPages.length;
+
+
+            loadLibraryPage(
+                index
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   BABEL SEARCH
+========================================================= */
+
+document
+    .getElementById(
+        "librarySearch"
+    )
+    .addEventListener(
+        "input",
+        event => {
+
+            const query =
+                event.target.value
+                    .trim()
+                    .toLowerCase();
+
+
+            if (!query) {
+
+                filteredLibraryPages =
+                    [...libraryPages];
+
+            }
+
+            else {
+
+                filteredLibraryPages =
+                    libraryPages.filter(
+                        page =>
+                            String(
+                                page.name ||
+                                ""
+                            )
+                                .toLowerCase()
+                                .includes(
+                                    query
+                                )
+                    );
+
+            }
+
+
+            renderLibraryPageList();
+
+        }
+    );
+
+
+/* =========================================================
+   KEYBOARD BABEL NAVIGATION
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        const libraryPage =
+            document.getElementById(
+                "library"
+            );
+
+
+        if (
+            !libraryPage ||
+            !libraryPage.classList.contains(
+                "active"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            event.target.tagName ===
+            "INPUT"
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            event.key ===
+            "ArrowLeft"
+        ) {
+
+            document
+                .getElementById(
+                    "libraryPrevious"
+                )
+                .click();
+
+        }
+
+
+        if (
+            event.key ===
+            "ArrowRight"
+        ) {
+
+            document
+                .getElementById(
+                    "libraryNext"
+                )
+                .click();
+
+        }
+
+
+        if (
+            event.key.toLowerCase() ===
+            "r"
+        ) {
+
+            randomLibraryPage();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
    UPLOAD
 ========================================================= */
 
@@ -4099,8 +5911,113 @@ setInterval(
 
         }
 
+
+        const logProgress =
+            document.getElementById(
+                "logProgress"
+            );
+
+
+        if (logProgress) {
+
+            logProgress.textContent =
+                "█".repeat(
+                    bars
+                ) +
+                "░".repeat(
+                    Math.max(
+                        0,
+                        17 - bars
+                    )
+                ) +
+                ` ${fakeValue}%`;
+
+        }
+
     },
     1500
+);
+
+
+/* =========================================================
+   RANDOM DREAMCORE TEXT
+========================================================= */
+
+const dreamcoreFragments = [
+
+    "THIS FILE WAS NOT HERE YESTERDAY.",
+
+    "MEMORY INDEX OUT OF RANGE.",
+
+    "SOMEONE LEFT THE LIGHT ON.",
+
+    "YOU HAVE BEEN HERE BEFORE.",
+
+    "ARCHIVE DATE UNKNOWN.",
+
+    "DO NOT TRUST THE TIMESTAMP.",
+
+    "THE HALLWAY IS LONGER NOW.",
+
+    "FILE RECOVERED FROM UNKNOWN SOURCE.",
+
+    "THIS MEMORY BELONGS TO SOMEONE ELSE.",
+
+    "CONNECTION ESTABLISHED WITH LOST NODE."
+
+];
+
+
+setInterval(
+    () => {
+
+        const fragment =
+            document.querySelector(
+                ".memory-fragment"
+            );
+
+
+        if (!fragment) {
+            return;
+        }
+
+
+        if (
+            Math.random() <
+            0.35
+        ) {
+
+            const text =
+                dreamcoreFragments[
+                    Math.floor(
+                        Math.random() *
+                        dreamcoreFragments.length
+                    )
+                ];
+
+
+            fragment.innerHTML = `
+
+                [ RECOVERED MEMORY ]
+
+                <br><br>
+
+                ${escapeHTML(
+                    text
+                )}
+
+                <br><br>
+
+                <span class="muted">
+                    — FILE PARTIALLY CORRUPTED —
+                </span>
+
+            `;
+
+        }
+
+    },
+    9000
 );
 
 
@@ -4109,12 +6026,6 @@ setInterval(
 ========================================================= */
 
 (async function init() {
-
-    /*
-     * IMPORTANT :
-     * On ne fait PAS attendre ces requêtes
-     * avant de retirer le boot.
-     */
 
     checkServer();
 
